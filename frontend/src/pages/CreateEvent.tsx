@@ -1,10 +1,50 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import Navbar from "../components/Navbar";
+import { createEvent } from "../services/eventService";
+
+import type {
+  CreateEventPayload,
+  CreateTicketPayload,
+  TicketForm
+} from "../types/event";
 
 function CreateEvent() {
+  const navigate = useNavigate();
   /* STATES */
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState("event");
+  const [eventData, setEventData] =
+  useState<CreateEventPayload>({
+    title: "",
+    description: "",
+    location: "",
+    category: "",
+    start_date: "",
+    end_date: "",
+
+    venue_name: "",
+    venue_address: "",
+
+    latitude: undefined,
+    longitude: undefined,
+
+    tickets: [],
+  });
+
+const [tickets, setTickets] = useState<
+  TicketForm[]
+>([
+  {
+    name: "",
+    price: "",
+    quota: "",
+  },
+]);
+
+const [loading, setLoading] =
+  useState(false);
 
   /* REFS */
   const eventRef = useRef<HTMLDivElement>(null);
@@ -64,6 +104,73 @@ function CreateEvent() {
   }, []);
 
   /* HANDLE BANNER UPLOAD */
+  const addTicket = () => {
+  setTickets((prev) => [
+    ...prev,
+    {
+      name: "",
+      price: "",
+      quota: "",
+    },
+  ]);
+};
+
+const updateTicket = (
+  index: number,
+  field: keyof TicketForm,
+  value: string
+) => {
+  const updated = [...tickets];
+
+  updated[index] = {
+    ...updated[index],
+    [field]: value,
+  } as any;
+
+  setTickets(updated);
+};
+const handlePublish = async () => {
+  try {
+    setLoading(true);
+
+    const formattedTickets: CreateTicketPayload[] =
+      tickets.map((ticket) => ({
+        name: ticket.name.trim(),
+        price: Number(ticket.price),
+        quota: Number(ticket.quota),
+      }));
+
+    if (
+      formattedTickets.some(
+        (t) =>
+          !t.name ||
+          t.price <= 0 ||
+          t.quota <= 0
+      )
+    ) {
+      alert(
+        "Please fill in all ticket details correctly"
+      );
+      return;
+    }
+
+    await createEvent({
+      ...eventData,
+      tickets: formattedTickets,
+    });
+
+    alert("Event created successfully");
+
+    navigate("/events");
+  } catch (error) {
+    console.error(error);
+
+    alert("Failed to create event");
+  } finally {
+    setLoading(false);
+  }
+};
+
   const handleBanner = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -155,20 +262,49 @@ function CreateEvent() {
             </label>
 
             <input
+              value={eventData.title}
+              onChange={(e) =>
+                setEventData({
+                  ...eventData,
+                  title: e.target.value,
+                })
+              }
               placeholder="Event Name"
               className="w-full p-3 border rounded-xl mb-3"
             />
 
-            <select className="w-full p-3 border rounded-xl mb-3">
-              <option>Select Category</option>
+            <select 
+              value={eventData.category}
+              onChange={(e) =>
+                setEventData({
+                  ...eventData,
+                  category: e.target.value,
+                })
+              }
+              className="w-full p-3 border rounded-xl mb-3"
+            >
+              <option value="">Select Category
+              </option>
               <option>Music</option>
               <option>Sports</option>
             </select>
 
             <textarea
-              placeholder="Description"
+              maxLength={1000}
+              value={eventData.description}
+              onChange={(e) =>
+                setEventData({
+                  ...eventData,
+                  description: e.target.value,
+                })
+              }
+              placeholder="Event Description"
               className="w-full p-3 border rounded-xl"
             />
+
+            <p className="text-sm text-gray-500 mt-1 text-right">
+              {eventData.description.length}/1000
+            </p>
           </div>
 
           {/* SCHEDULE */}
@@ -180,20 +316,65 @@ function CreateEvent() {
               Schedule & Location
             </h2>
 
+            <input
+              value={eventData.location}
+              onChange={(e) =>
+                setEventData({
+                  ...eventData,
+                  location: e.target.value,
+                })
+              }
+              placeholder="City (Jakarta, Bandung, Surabaya...)"
+              className="w-full p-3 border rounded-xl mb-4"
+            />
+
             <div className="flex gap-4 mb-4">
               <input
                 type="datetime-local"
+                value={eventData.start_date}
+                onChange={(e) =>
+                  setEventData({
+                    ...eventData,
+                    start_date: e.target.value,
+                  })
+                }
                 className="w-full p-3 border rounded-xl"
               />
 
               <input
                 type="datetime-local"
+                value={eventData.end_date}
+                onChange={(e) =>
+                  setEventData({
+                    ...eventData,
+                    end_date: e.target.value,
+                  })
+                }
                 className="w-full p-3 border rounded-xl"
               />
             </div>
 
             <input
-              placeholder="Venue / Online Link"
+              value={eventData.venue_name ?? ""}
+              onChange={(e) =>
+                setEventData({
+                  ...eventData,
+                  venue_name: e.target.value,
+                })
+              }
+              placeholder="Venue"
+              className="w-full p-3 border rounded-xl mb-4"
+            />
+
+            <input
+              value={eventData.venue_address ?? ""}
+              onChange={(e) =>
+                setEventData({
+                  ...eventData,
+                  venue_address: e.target.value,
+                })
+              }
+              placeholder="Venue Address"
               className="w-full p-3 border rounded-xl mb-4"
             />
 
@@ -211,30 +392,76 @@ function CreateEvent() {
               Tickets & Pricing
             </h2>
 
-            <div className="border p-4 rounded-xl mb-4">
-              <p className="font-semibold mb-2">
-                General Admission
-              </p>
+            {tickets.map((ticket, index) => (
+              <div
+                key={index}
+                className="border p-4 rounded-xl mb-4"
+              >
+                <p className="font-semibold mb-2">
+                  Ticket Type #{index + 1}
+                </p>
 
-              <div className="flex gap-3">
-                <input
-                  placeholder="Type"
-                  className="flex-1 p-3 border rounded-xl"
+                <div className="flex flex-col md:flex-row gap-3">
+                  <input
+                   value={ticket.name}
+                   onChange={(e) =>
+                    updateTicket(
+                      index,
+                      "name",
+                      e.target.value
+                    )
+                  }
+                  placeholder="Ticket Name (VIP, General Admission...)"
+                  className="w-full p-3 border rounded-xl"
                 />
 
                 <input
-                  placeholder="Price"
-                  className="flex-1 p-3 border rounded-xl"
+                  type="text"
+                  inputMode="numeric"
+                  value={ticket.price}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    if (/^\d*$/.test(value)) {
+                      updateTicket(
+                        index,
+                        "price",
+                        value
+                      );
+                    }
+                  }}
+                  placeholder="Price (IDR)"
+                  className="w-full p-3 border rounded-xl"
                 />
 
                 <input
-                  placeholder="Quantity"
-                  className="flex-1 p-3 border rounded-xl"
+                  type="text"
+                  inputMode="numeric"
+                  value={ticket.quota}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    if (/^\d*$/.test(value)) {
+                      updateTicket(
+                        index,
+                        "quota",
+                        value
+                      );
+                    }
+                  }}
+
+                  placeholder="Quota"
+                  className="w-full p-3 border rounded-xl"
                 />
               </div>
             </div>
+          ))}
 
-            <button className="border-dashed border w-full p-3 rounded-xl text-purple-600 hover:bg-purple-50">
+            <button 
+              type="button"
+              onClick={addTicket}
+              className="border-dashed border w-full p-3 rounded-xl text-purple-600 hover:bg-purple-50"
+            >
               + Add Ticket
             </button>
           </div>
@@ -280,8 +507,12 @@ function CreateEvent() {
           Discard
         </button>
 
-        <button className="px-6 py-3 bg-purple-600 text-white rounded-xl">
-          Publish Event
+        <button 
+          onClick={handlePublish}
+          disabled={loading}
+          className="px-6 py-3 bg-purple-600 text-white rounded-xl disabled:opacity-50"
+        >
+          {loading ? "Publishing..." : "Publish Event"}
         </button>
       </div>
     </div>

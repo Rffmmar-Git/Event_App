@@ -1,4 +1,7 @@
-import type { Event } from "../types/event";
+import type {
+  Event,
+  CreateEventPayload,
+} from "../types/event";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -78,7 +81,7 @@ export const getEventById = async (
 
 /* CREATE EVENT */
 export const createEvent = async (
-  event: Omit<Event, "id">
+  event: CreateEventPayload
 ) => {
   const res = await fetch(API_URL, {
     method: "POST",

@@ -8,6 +8,7 @@ import {
   uploadPaymentProof,
 } from "../services/transactionService";
 import type { Event } from "../types/event";
+import { formatCurrency } from "../utils/formatCurrency";
 
 function EventDetail() {
   /* ROUTE PARAMS */
@@ -247,7 +248,7 @@ function EventDetail() {
 
                 <div>
                   <p>
-                    Rp {ticket.price}
+                    Rp {formatCurrency(ticket.price)}
                   </p>
 
                   {!isFull && (
