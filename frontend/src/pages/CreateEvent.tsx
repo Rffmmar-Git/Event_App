@@ -46,6 +46,9 @@ const [tickets, setTickets] = useState<
 const [loading, setLoading] =
   useState(false);
 
+const [locationQuery, setLocationQuery] = 
+  useState("");
+
   /* REFS */
   const eventRef = useRef<HTMLDivElement>(null);
   const scheduleRef = useRef<HTMLDivElement>(null);
@@ -168,6 +171,40 @@ const handlePublish = async () => {
     alert("Failed to create event");
   } finally {
     setLoading(false);
+  }
+};
+
+  const handleSearchLocation = async() => {
+    try {
+      if (!locationQuery.trim()) {
+        alert("Please enter a location");
+        return;
+      }
+
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationQuery
+        )}`
+      );
+      const data = await response.json();
+
+    if (!data.length) {
+      alert("Location not found");
+      return;
+    }
+
+    const result = data[0];
+
+    setEventData((prev) => ({
+      ...prev,
+      latitude: Number(result.lat),
+      longitude: Number(result.lon),
+    }));
+
+    alert("location found!");
+  } catch (error) {
+    console.error(error);
+
+    alert("Failed to search location");
   }
 };
 
@@ -378,9 +415,37 @@ const handlePublish = async () => {
               className="w-full p-3 border rounded-xl mb-4"
             />
 
-            <div className="h-40 bg-gray-200 rounded-xl flex items-center justify-center">
-              Map Placeholder
+            <div className="space-y-4">
+
+              <input
+                value={locationQuery}
+                onChange={(e) =>
+                  setLocationQuery(e.target.value)
+                }
+                placeholder="Search Location (Ancol Beach City Jakarta)"
+                className="w-full p-3 border rounded-xl"
+              />
+
+              <button
+                onClick={handleSearchLocation}
+                className="w-full p-3 bg-purple-600 text-white rounded-xl"
+              >
+                Search Location
+              </button>
+
+              {eventData.latitude && eventData.longitude && (
+                <iframe
+                  title="location-preview"
+                  width="100%"
+                  height="300"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  className="rounded-xl"
+                  src={`https://maps.google.com/maps?q=${eventData.latitude},${eventData.longitude}&z=15&output=embed`}
+                />
+              )}
             </div>
+
           </div>
 
           {/* TICKETS */}
