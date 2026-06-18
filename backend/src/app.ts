@@ -9,6 +9,7 @@ import path from "path";
 
 import eventRoutes from "./routes/eventRoutes";
 import transactionRoutes from "./routes/transactionRoutes";
+import authRoutes from "./routes/authRoutes";
 
 /* LOAD CRON JOBS */
 import "./utils/cron";
@@ -30,7 +31,7 @@ app.use(
 /* ROUTES */
 app.use("/events", eventRoutes);
 app.use("/transactions", transactionRoutes);
-
+app.use("/auth", authRoutes);
 /* HEALTH CHECK */
 app.get("/", (req, res) => {
   res.send("API is running 🚀");

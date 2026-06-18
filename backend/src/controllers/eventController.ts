@@ -1,4 +1,9 @@
 import { Request, Response } from "express";
+
+import {
+  AuthRequest,
+} from "../middleware/auth.middleware";
+
 import {
   getAllEvents,
   getEventByIdService,
@@ -60,9 +65,17 @@ export const getEventById = async (req: Request, res: Response) => {
 };
 
 /* CREATE EVENT */
-export const createEvent = async (req: Request, res: Response) => {
+export const createEvent = async (req: AuthRequest, res: Response) => {
   try {
-    const newEvent = await createEventService(req.body);
+    console.log(
+      "Logged in user:",
+      req.user
+    );
+
+    const newEvent = await createEventService(
+      req.body,
+      req.user!.id
+    );
 
     return res.status(201).json({
       success: true,

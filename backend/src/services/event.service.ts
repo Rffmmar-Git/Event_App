@@ -93,7 +93,10 @@ export const getEventByIdService = async (id: number) => {
 };
 
 /* CREATE EVENT */
-export const createEventService = async (data: any) => {
+export const createEventService = async (
+  data: any,
+  organizerId: number
+) => {
   const {
     title,
     description,
@@ -127,6 +130,7 @@ export const createEventService = async (data: any) => {
       category,
       start_date: new Date(start_date),
       end_date: new Date(end_date),
+      organizer_id: organizerId,
 
       /* VENUE INFORMATION */
       venue_name: venue_name || null,
