@@ -170,6 +170,17 @@ function EventDetail() {
           </p>
         </div>
 
+        {/* DESCRIPTION */}
+        <div className="pt-2 border-t">
+          <h2 className="font-semibold text-lg mb-2">
+            About This Event
+          </h2>
+
+          <p className="text-gray-700 whitespace-pre-line">
+            {event.description}
+          </p>
+        </div>
+
         <div className="w-full bg-gray-200 h-2 rounded-full">
           <div
             className="bg-purple-600 h-2 rounded-full"
