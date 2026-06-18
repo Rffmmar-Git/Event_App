@@ -6,8 +6,8 @@ export const getAllEvents = async (query: any) => {
     search,
     category,
     location,
-    page = "1",
-    limit = "6",
+    page,
+    limit,
   } = query;
 
   /* PAGINATION */
@@ -74,8 +74,12 @@ export const getAllEvents = async (query: any) => {
       start_date: "asc",
     },
 
-    skip,
-    take: limitNumber,
+    ...(limit
+      ? {
+        skip,
+        take: limitNumber,
+      }
+    : {})
   });
 };
 

@@ -91,7 +91,7 @@ export const uploadPaymentProof = async (
       },
       data: {
         payment_proof: paymentProof,
-        status: "PENDING",
+        status: "WAITING_FOR_PAYMENT",
       },
     });
 

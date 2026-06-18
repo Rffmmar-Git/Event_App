@@ -7,7 +7,7 @@ export const expireTransactions = async () => {
   /* FIND EXPIRED TRANSACTIONS */
   const expiredTransactions = await prisma.transactions.findMany({
     where: {
-      status: "PENDING",
+      status: "WAITING_FOR_PAYMENT",
       expired_at: {
         lte: now,
       },
@@ -58,7 +58,7 @@ export const autoCancelTransactions = async () => {
   /* FIND OLD PENDING TRANSACTIONS */
   const transactions = await prisma.transactions.findMany({
     where: {
-      status: "PENDING",
+      status: "WAITING_FOR_PAYMENT",
       created_at: {
         lte: threeDaysAgo,
       },

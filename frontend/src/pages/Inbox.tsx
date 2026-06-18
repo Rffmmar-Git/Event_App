@@ -23,7 +23,7 @@ function Inbox() {
   const readyTickets =
     transactions.filter(
       (trx) =>
-        trx.status === "ACCEPTED"
+        trx.status === "DONE"
     );
 
   return (

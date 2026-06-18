@@ -105,7 +105,7 @@ export const createTransactionService = async (
         original_price: subtotal,
         discount_amount: discount + pointsUsed,
         final_price,
-        status: "PENDING",
+        status: "WAITING_FOR_PAYMENT",
         expired_at,
         voucher_id: voucher_id || null,
       },
