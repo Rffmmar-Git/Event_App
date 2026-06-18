@@ -92,6 +92,26 @@ export const getEventByIdService = async (id: number) => {
   });
 };
 
+/* GET MY EVENTS */
+export const getMyEventsService = async (
+  organizerId: number
+) => {
+  return await prisma.events.findMany({
+    where: {
+      organizer_id: organizerId,
+    },
+
+    include: {
+      tickets: true,
+      vouchers: true,
+    },
+
+    orderBy: {
+      created_at: "desc",
+    },
+  });
+};
+
 /* CREATE EVENT */
 export const createEventService = async (
   data: any,

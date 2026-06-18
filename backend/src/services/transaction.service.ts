@@ -1,7 +1,10 @@
 import prisma from "../config/prisma";
 
 /* CREATE TRANSACTION SERVICE */
-export const createTransactionService = async (data: any) => {
+export const createTransactionService = async (
+  data: any,
+  userId: number
+) => {
   const { ticket_id, quantity, voucher_id, use_points = false } = data;
 
   /* VALIDATE INPUT */
@@ -67,9 +70,6 @@ export const createTransactionService = async (data: any) => {
         },
       });
     }
-
-    /* GET USER */
-    const userId = 2;
 
     const user = await tx.users.findUnique({
       where: { id: userId },

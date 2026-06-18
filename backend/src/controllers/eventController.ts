@@ -8,6 +8,7 @@ import {
   getAllEvents,
   getEventByIdService,
   createEventService,
+  getMyEventsService,
 } from "../services/event.service";
 
 /* GET ALL EVENTS */
@@ -60,6 +61,35 @@ export const getEventById = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Internal server error",
+    });
+  }
+};
+
+/* GET MY EVENTS */
+export const getMyEvents = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const events =
+      await getMyEventsService(
+        req.user!.id
+      );
+
+    return res.status(200).json({
+      success: true,
+      data: events,
+    });
+  } catch (error) {
+    console.error(
+      "GET MY EVENTS ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Internal server error",
     });
   }
 };

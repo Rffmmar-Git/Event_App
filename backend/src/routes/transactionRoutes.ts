@@ -9,18 +9,36 @@ import {
 
 import { upload } from "../middleware/upload";
 
+import {
+  verifyToken,
+} from "../middleware/auth.middleware";
+
 const router = express.Router();
 
-router.get("/", getTransactions);
+/* PROTECTED ROUTES */
+router.get(
+  "/",
+  verifyToken,
+  getTransactions
+);
 
-router.get("/:id", getTransactionById);
-
-router.post("/", createTransaction);
+router.post(
+  "/",
+  verifyToken,
+  createTransaction
+);
 
 router.patch(
   "/:id/payment-proof",
+  verifyToken,
   upload.single("payment_proof"),
   uploadPaymentProof
+);
+
+router.get(
+  "/:id",
+  verifyToken,
+  getTransactionById
 );
 
 export default router;

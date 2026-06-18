@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
+import { AuthRequest } from "../middleware/auth.middleware";
 import prisma from "../config/prisma";
 import { createTransactionService } from "../services/transaction.service";
 
 /* CREATE TRANSACTION */
 export const createTransaction = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
@@ -19,7 +20,10 @@ export const createTransaction = async (
     }
 
     /* CREATE TRANSACTION */
-    const transaction = await createTransactionService(req.body);
+    const transaction = await createTransactionService(
+      req.body,
+      req.user!.id
+    );
 
     return res.status(201).json({
       success: true,
@@ -109,14 +113,14 @@ export const uploadPaymentProof = async (
 
 /* GET USER TRANSACTIONS */
 export const getTransactions = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
     /* FETCH TRANSACTIONS */
     const transactions = await prisma.transactions.findMany({
       where: {
-        user_id: 2,
+        user_id: req.user!.id,
       },
       include: {
         transaction_items: {
