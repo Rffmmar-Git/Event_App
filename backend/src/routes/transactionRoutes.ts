@@ -5,6 +5,9 @@ import {
   uploadPaymentProof,
   getTransactions,
   getTransactionById,
+  getOrganizerTransactions,
+  approveTransaction,
+  rejectTransaction,
 } from "../controllers/transactionController";
 
 import { upload } from "../middleware/upload";
@@ -15,7 +18,14 @@ import {
 
 const router = express.Router();
 
-/* PROTECTED ROUTES */
+/* ORGANIZER ROUTES */
+router.get(
+  "/organizer",
+  verifyToken,
+  getOrganizerTransactions
+);
+
+/* CUSTOMER ROUTES */
 router.get(
   "/",
   verifyToken,
@@ -33,6 +43,18 @@ router.patch(
   verifyToken,
   upload.single("payment_proof"),
   uploadPaymentProof
+);
+
+router.patch(
+  "/:id/approve",
+  verifyToken,
+  approveTransaction
+);
+
+router.patch(
+  "/:id/reject",
+  verifyToken,
+  rejectTransaction
 );
 
 router.get(

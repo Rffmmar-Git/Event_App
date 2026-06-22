@@ -58,8 +58,8 @@ export const autoCancelTransactions = async () => {
   /* FIND OLD PENDING TRANSACTIONS */
   const transactions = await prisma.transactions.findMany({
     where: {
-      status: "WAITING_FOR_PAYMENT",
-      created_at: {
+      status: "WAITING_CONFIRMATION",
+      updated_at: {
         lte: threeDaysAgo,
       },
     },

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { eventCategories } from "../constants/categories";
 import Navbar from "../components/Navbar";
 import { createEvent } from "../services/eventService";
 
@@ -320,10 +320,20 @@ const handlePublish = async () => {
               }
               className="w-full p-3 border rounded-xl mb-3"
             >
-              <option value="">Select Category
+              <option value="">
+                Select Category
               </option>
-              <option>Music</option>
-              <option>Sports</option>
+
+              {eventCategories.map(
+                (category) => (
+                  <option
+                  key={category}
+                  value={category}
+                  >
+                    {category}
+                  </option>
+                )
+              )}
             </select>
 
             <textarea

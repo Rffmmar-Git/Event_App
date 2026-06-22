@@ -1,3 +1,5 @@
+import { eventCategories } from "../constants/categories";
+
 type Props = {
   category: string;
   setCategory: (
@@ -7,7 +9,6 @@ type Props = {
   setLocation: (
     value: string
   ) => void;
-  categories: string[];
   locations: string[];
 };
 
@@ -16,7 +17,6 @@ function EventFilter({
   setCategory,
   location,
   setLocation,
-  categories,
   locations,
 }: Props) {
   return (
@@ -39,21 +39,16 @@ function EventFilter({
           Types of Event
         </option>
 
-        {categories
-          .filter(
-            (cat) =>
-              cat !== "all"
+        {eventCategories.map(
+          (cat) => (
+            <option
+              key={cat}
+              value={cat}
+            >
+              {cat}
+            </option>
           )
-          .map(
-            (cat, index) => (
-              <option
-                key={index}
-                value={cat}
-              >
-                {cat}
-              </option>
-            )
-          )}
+        )}
       </select>
 
       {/* LOCATION FILTER */}
@@ -80,9 +75,9 @@ function EventFilter({
               loc !== "all"
           )
           .map(
-            (loc, index) => (
+            (loc) => (
               <option
-                key={index}
+                key={loc}
                 value={loc}
               >
                 {loc}

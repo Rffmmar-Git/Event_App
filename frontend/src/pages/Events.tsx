@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { eventCategories } from "../constants/categories";
 import Navbar from "../components/Navbar";
 import { getEvents } from "../services/eventService";
 import useDebounce from "../hooks/useDebounce";
@@ -45,13 +45,6 @@ function Events() {
   ]);
 
   /* FILTER OPTIONS */
-  const categories = [
-    "all",
-    ...new Set(
-      events.map((e) => e.category)
-    ),
-  ];
-
   const locations = [
     "all",
     ...new Set(
@@ -65,9 +58,7 @@ function Events() {
 
       {/* MAIN CONTENT */}
       <section className="pt-32 px-6 max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">
-          Browse Events
-        </h1>
+        <h1 className="text-3xl font-bold mb-6">Browse Events</h1>
 
         {/* SEARCH AND FILTERS */}
         <div className="flex flex-col md:flex-row gap-3 mb-8">
@@ -75,57 +66,35 @@ function Events() {
             type="text"
             placeholder="Search events..."
             value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
+            onChange={(e) => setSearch(e.target.value)}
             className="flex-1 p-4 rounded-full border border-gray-300"
           />
 
           <select
             value={category}
-            onChange={(e) =>
-              setCategory(e.target.value)
-            }
+            onChange={(e) => setCategory(e.target.value)}
             className="p-4 rounded-full border border-gray-300 bg-white"
           >
-            <option value="all">
-              All Events
-            </option>
+            <option value="all">All Events</option>
 
-            {categories
-              .filter(
-                (cat) => cat !== "all"
-              )
-              .map((cat, i) => (
-                <option
-                  key={i}
-                  value={cat}
-                >
-                  {cat}
-                </option>
-              ))}
+            {eventCategories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
           </select>
 
           <select
             value={location}
-            onChange={(e) =>
-              setLocation(e.target.value)
-            }
+            onChange={(e) => setLocation(e.target.value)}
             className="p-4 rounded-full border border-gray-300 bg-white"
           >
-            <option value="all">
-              All Locations
-            </option>
+            <option value="all">All Locations</option>
 
             {locations
-              .filter(
-                (loc) => loc !== "all"
-              )
+              .filter((loc) => loc !== "all")
               .map((loc, i) => (
-                <option
-                  key={i}
-                  value={loc}
-                >
+                <option key={i} value={loc}>
                   {loc}
                 </option>
               ))}
@@ -133,61 +102,56 @@ function Events() {
         </div>
 
         {/* EVENTS GRID */}
-        <div className="grid md:grid-cols-3 gap-6">
-          {events.map((event) => {
-            /* LOWEST TICKET PRICE */
-            const lowestPrice =
-              event.tickets &&
-              event.tickets.length > 0
-                ? Math.min(
-                    ...event.tickets.map(
-                      (t: {
-                        price: number;
-                      }) => t.price
+        {events.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow p-10 text-center">
+            <h2 className="text-2xl font-bold text-gray-700 mb-2">
+              No Events Found
+            </h2>
+
+            <p className="text-gray-500">
+              Sorry, there are currently no events matching your search or
+              filters.
+            </p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-6">
+            {events.map((event) => {
+              /* LOWEST TICKET PRICE */
+              const lowestPrice =
+                event.tickets && event.tickets.length > 0
+                  ? Math.min(
+                      ...event.tickets.map((t: { price: number }) => t.price),
                     )
-                  )
-                : 0;
+                  : 0;
 
-            return (
-              <div
-                key={event.id}
-                onClick={() =>
-                  navigate(
-                    `/events/${event.id}`
-                  )
-                }
-                className="bg-white rounded-xl shadow hover:-translate-y-2 transition cursor-pointer"
-              >
-                {/* EVENT BANNER */}
-                <div className="h-40 bg-gray-200 rounded-t-xl"></div>
+              return (
+                <div
+                  key={event.id}
+                  onClick={() => navigate(`/events/${event.id}`)}
+                  className="bg-white rounded-xl shadow hover:-translate-y-2 transition cursor-pointer"
+                >
+                  {/* EVENT BANNER */}
+                  <div className="h-40 bg-gray-200 rounded-t-xl"></div>
 
-                {/* EVENT DETAILS */}
-                <div className="p-4">
-                  <p className="text-sm text-purple-600">
-                    {new Date(
-                      event.start_date
-                    ).toLocaleDateString()}
-                  </p>
+                  {/* EVENT DETAILS */}
+                  <div className="p-4">
+                    <p className="text-sm text-purple-600">
+                      {new Date(event.start_date).toLocaleDateString()}
+                    </p>
 
-                  <h3 className="font-bold text-lg">
-                    {event.title}
-                  </h3>
+                    <h3 className="font-bold text-lg">{event.title}</h3>
 
-                  <p className="text-sm text-gray-500">
-                    📍 {event.location}
-                  </p>
+                    <p className="text-sm text-gray-500">📍 {event.location}</p>
 
-                  <p className="mt-2 font-semibold">
-                    Rp{" "}
-                    {new Intl.NumberFormat(
-                      "id-ID"
-                    ).format(lowestPrice)}
-                  </p>
+                    <p className="mt-2 font-semibold">
+                      Rp {new Intl.NumberFormat("id-ID").format(lowestPrice)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );

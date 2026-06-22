@@ -17,7 +17,6 @@ export const getEvents = async (params?: {
 }): Promise<Event[]> => {
   const query = new URLSearchParams();
 
-  /* BUILD QUERY PARAMS */
   if (params?.search) {
     query.append("search", params.search);
   }
@@ -44,12 +43,10 @@ export const getEvents = async (params?: {
     );
   }
 
-  /* FETCH EVENTS */
   const res = await fetch(
     `${API_URL}?${query.toString()}`
   );
 
-  /* HANDLE ERROR */
   if (!res.ok) {
     throw new Error(
       "Failed to fetch events"
@@ -61,44 +58,93 @@ export const getEvents = async (params?: {
   return data.data;
 };
 
+/* GET MY EVENTS */
+export const getMyEvents =
+  async (): Promise<Event[]> => {
+    const token =
+      localStorage.getItem(
+        "token"
+      );
+
+    const res = await fetch(
+      `${API_URL}/my-events`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data =
+      await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data.message ||
+          "Failed to fetch events"
+      );
+    }
+
+    return data.data;
+  };
+
 /* GET EVENT BY ID */
-export const getEventById = async (
-  id: string
-): Promise<Event> => {
-  const res = await fetch(
-    `${API_URL}/${id}`
-  );
+export const getEventById =
+  async (
+    id: string
+  ): Promise<Event> => {
+    const res = await fetch(
+      `${API_URL}/${id}`
+    );
 
-  /* HANDLE ERROR */
-  if (!res.ok) {
-    throw new Error("Event not found");
-  }
+    if (!res.ok) {
+      throw new Error(
+        "Event not found"
+      );
+    }
 
-  const data = await res.json();
+    const data =
+      await res.json();
 
-  return data.data;
-};
+    return data.data;
+  };
 
 /* CREATE EVENT */
-export const createEvent = async (
-  event: CreateEventPayload
-) => {
-  const res = await fetch(API_URL, {
-    method: "POST",
+export const createEvent =
+  async (
+    event: CreateEventPayload
+  ) => {
+    const token =
+      localStorage.getItem(
+        "token"
+      );
 
-    headers: {
-      "Content-Type": "application/json",
-    },
+    const res = await fetch(
+      API_URL,
+      {
+        method: "POST",
 
-    body: JSON.stringify(event),
-  });
+        headers: {
+          "Content-Type":
+            "application/json",
+          Authorization: `Bearer ${token}`,
+        },
 
-  /* HANDLE ERROR */
-  if (!res.ok) {
-    throw new Error(
-      "Failed to create event"
+        body: JSON.stringify(
+          event
+        ),
+      }
     );
-  }
 
-  return res.json();
-};
+    const data =
+      await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data.message ||
+          "Failed to create event"
+      );
+    }
+
+    return data;
+  };

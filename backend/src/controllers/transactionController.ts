@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import prisma from "../config/prisma";
-import { createTransactionService } from "../services/transaction.service";
+import { createTransactionService, getOrganizerTransactionsService, approveTransactionService, rejectTransactionService  } from "../services/transaction.service";
+
 
 /* CREATE TRANSACTION */
 export const createTransaction = async (
@@ -91,7 +92,7 @@ export const uploadPaymentProof = async (
       },
       data: {
         payment_proof: paymentProof,
-        status: "WAITING_FOR_PAYMENT",
+        status: "WAITING_CONFIRMATION",
       },
     });
 
@@ -146,6 +147,93 @@ export const getTransactions = async (
     return res.status(500).json({
       success: false,
       message: "Failed to fetch transactions",
+    });
+  }
+};
+
+/* GET ORGANIZER TRANSACTIONS */
+export const getOrganizerTransactions = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const transactions =
+      await getOrganizerTransactionsService(
+        req.user!.id
+      );
+
+    return res.status(200).json({
+      success: true,
+      data: transactions,
+    });
+  } catch (error) {
+    console.error(
+      "Get organizer transactions error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to fetch organizer transactions",
+    });
+  }
+};
+
+/* APPROVE TRANSACTION */
+export const approveTransaction = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const transactionId =
+      Number(req.params.id);
+
+    const transaction =
+      await approveTransactionService(
+        transactionId
+      );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Transaction approved",
+      data: transaction,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message:
+        error.message,
+    });
+  }
+};
+
+/* REJECT TRANSACTION */
+export const rejectTransaction = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const transactionId =
+      Number(req.params.id);
+
+    const transaction =
+      await rejectTransactionService(
+        transactionId
+      );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Transaction rejected",
+      data: transaction,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message:
+        error.message,
     });
   }
 };
