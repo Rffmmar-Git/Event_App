@@ -188,3 +188,108 @@ export const createEventService = async (
     },
   });
 };
+
+/* UPDATE EVENT */
+export const updateEventService = async (
+  eventId: number,
+  organizerId: number,
+  data: any
+) => {
+  const existingEvent =
+    await prisma.events.findUnique({
+      where: { id: eventId },
+    });
+
+  if (!existingEvent) {
+    throw new Error("Event not found");
+  }
+
+  if (
+    existingEvent.organizer_id !==
+    organizerId
+  ) {
+    throw new Error(
+      "You are not allowed to edit this event"
+    );
+  }
+
+  const {
+    title,
+    description,
+    location,
+    category,
+    start_date,
+    end_date,
+    venue_name,
+    venue_address,
+    latitude,
+    longitude,
+    tickets,
+  } = data;
+
+  if (
+    start_date &&
+    end_date &&
+    new Date(start_date) >=
+      new Date(end_date)
+  ) {
+    throw new Error(
+      "Invalid date range"
+    );
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    const updatedEvent = await tx.events.update({
+      where: {
+        id: eventId,
+      },
+
+      data: {
+        title,
+        description,
+        location,
+        category,
+
+        start_date: start_date ? new Date(start_date) : undefined,
+
+        end_date: end_date ? new Date(end_date) : undefined,
+
+        venue_name,
+        venue_address,
+
+        latitude: latitude !== undefined ? Number(latitude) : undefined,
+
+        longitude: longitude !== undefined ? Number(longitude) : undefined,
+      },
+    });
+
+    if (Array.isArray(tickets)) {
+      for (const ticket of tickets) {
+        if (ticket.id) {
+          await tx.tickets.update({
+            where: {
+              id: ticket.id,
+            },
+
+            data: {
+              name: ticket.name,
+              price: Number(ticket.price),
+              quota: Number(ticket.quota),
+            },
+          });
+        }
+      }
+    }
+
+    return tx.events.findUnique({
+      where: {
+        id: eventId,
+      },
+
+      include: {
+        tickets: true,
+        vouchers: true,
+      },
+    });
+  });
+};

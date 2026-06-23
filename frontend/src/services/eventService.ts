@@ -148,3 +148,39 @@ export const createEvent =
 
     return data;
   };
+
+  /* UPDATE EVENT */
+export const updateEvent = async (
+  id: number,
+  event: Partial<CreateEventPayload>
+) => {
+  const token =
+    localStorage.getItem("token");
+
+  const res = await fetch(
+    `${API_URL}/${id}`,
+    {
+      method: "PATCH",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify(event),
+    }
+  );
+
+  const data =
+    await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      data.message ||
+        "Failed to update event"
+    );
+  }
+
+  return data.data;
+};

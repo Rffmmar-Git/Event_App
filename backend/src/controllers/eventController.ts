@@ -9,6 +9,7 @@ import {
   getEventByIdService,
   createEventService,
   getMyEventsService,
+  updateEventService,
 } from "../services/event.service";
 
 /* GET ALL EVENTS */
@@ -118,6 +119,39 @@ export const createEvent = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({
       success: false,
       message: error.message || "Failed to create event",
+    });
+  }
+};
+
+/* UPDATE EVENT */
+export const updateEvent = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const eventId = Number(
+      req.params.id
+    );
+
+    const updatedEvent =
+      await updateEventService(
+        eventId,
+        req.user!.id,
+        req.body
+      );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Event updated successfully",
+      data: updatedEvent,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to update event",
     });
   }
 };

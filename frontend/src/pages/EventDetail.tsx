@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 import { getEventById } from "../services/eventService";
@@ -13,6 +13,7 @@ import { formatCurrency } from "../utils/formatCurrency";
 function EventDetail() {
   /* ROUTE PARAMS */
   const { id } = useParams();
+  const navigate = useNavigate();
 
   /* STATES */
   const [event, setEvent] =
@@ -253,7 +254,9 @@ function EventDetail() {
 
             <button
               className="bg-purple-600 text-white px-4 py-2 rounded"
-              onClick={() => alert("Edit Event page coming next")}
+              onClick={() => 
+                navigate(`/events/${event.id}/edit`)
+              }
             >
               Edit Event
             </button>
