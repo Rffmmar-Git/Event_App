@@ -132,6 +132,7 @@ model reviews {
 model vouchers {
   id              Int            @id @default(autoincrement())
   event_id        Int?
+  code            String?
   discount_amount Int?
   start_date      DateTime?
   end_date        DateTime?
