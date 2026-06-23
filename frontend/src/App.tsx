@@ -10,6 +10,7 @@ import TransactionHistory from "./pages/TransactionHistory";
 import Inbox from "./pages/Inbox";
 import ETicket from "./pages/ETicket";
 import MyEvents from "./pages/MyEvents";
+import OrganizerTransactions from "./pages/OrganizerTransactions";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import OrganizerRoute from "./routes/OrganizerRoute";
 
@@ -42,6 +43,15 @@ function App() {
         element={
           <OrganizerRoute>
             <MyEvents />
+          </OrganizerRoute>
+        }
+      />
+
+      <Route
+        path="/organizer-transactions"
+        element={
+          <OrganizerRoute>
+            <OrganizerTransactions />
           </OrganizerRoute>
         }
       />

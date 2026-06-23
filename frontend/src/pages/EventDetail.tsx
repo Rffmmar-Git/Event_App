@@ -37,6 +37,12 @@ function EventDetail() {
   const [selectedVoucher, setSelectedVoucher] =
     useState<number | null>(null);
 
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    const isOrganizer = user.role === "ORGANIZER";
+
+    const isOwner = event?.organizer_id === user.id;
+
   /* FETCH EVENT */
   useEffect(() => {
     if (!id) return;
@@ -141,108 +147,73 @@ function EventDetail() {
 
       {/* MAIN CONTENT */}
       <div className="pt-28 px-6 max-w-5xl mx-auto space-y-10">
-
         {/* HERO BANNER */}
         <div className="h-64 bg-gradient-to-r from-purple-400 to-purple-600 rounded-2xl shadow-lg" />
 
-        
         {/* EVENT INFORMATION */}
         <div className="bg-white p-6 rounded-2xl shadow-md space-y-4">
-          <h1 className="text-3xl font-bold">
-            {event.title}
-          </h1>
+          <h1 className="text-3xl font-bold">{event.title}</h1>
 
-        <div className="space-y-1 text-gray-600">
-          {event.venue_name && (
-            <p>
-              📍 {event.venue_name}
+          <div className="space-y-1 text-gray-600">
+            {event.venue_name && <p>📍 {event.venue_name}</p>}
+
+            {event.venue_address && <p>{event.venue_address}</p>}
+
+            <p>{event.location}</p>
+          </div>
+
+          {/* DESCRIPTION */}
+          <div className="pt-2 border-t">
+            <h2 className="font-semibold text-lg mb-2">About This Event</h2>
+
+            <p className="text-gray-700 whitespace-pre-line">
+              {event.description}
             </p>
-          )}
+          </div>
 
-          {event.venue_address && (
-            <p>
-              {event.venue_address}
-           </p>
-          )}
+          <div className="w-full bg-gray-200 h-2 rounded-full">
+            <div
+              className="bg-purple-600 h-2 rounded-full"
+              style={{
+                width: `${progress}%`,
+              }}
+            />
+          </div>
 
-          <p>
-            {event.location}
-          </p>
+          <p>{remaining} seats remaining</p>
         </div>
-
-        {/* DESCRIPTION */}
-        <div className="pt-2 border-t">
-          <h2 className="font-semibold text-lg mb-2">
-            About This Event
-          </h2>
-
-          <p className="text-gray-700 whitespace-pre-line">
-            {event.description}
-          </p>
-        </div>
-
-        <div className="w-full bg-gray-200 h-2 rounded-full">
-          <div
-            className="bg-purple-600 h-2 rounded-full"
-            style={{
-              width: `${progress}%`,
-           }}
-          />
-        </div>
-
-        <p>
-          {remaining} seats remaining
-        </p>
-      </div>
 
         {/* EVENT LOCATION */}
-        {event.latitude &&
-          event.longitude && (
-            <div className="bg-white p-6 rounded-2xl shadow-md">
-              <h2 className="text-lg font-semibold mb-4">
-                Event Location
-              </h2>
+        {event.latitude && event.longitude && (
+          <div className="bg-white p-6 rounded-2xl shadow-md">
+            <h2 className="text-lg font-semibold mb-4">Event Location</h2>
 
-              <iframe
-                title="event-location"
-                width="100%"
-                height="350"
-                style={{ border: 0 }}
-                loading="lazy"
-                className="rounded-xl"
-                src={`https://maps.google.com/maps?q=${event.latitude},${event.longitude}&z=15&output=embed`}
-              />
+            <iframe
+              title="event-location"
+              width="100%"
+              height="350"
+              style={{ border: 0 }}
+              loading="lazy"
+              className="rounded-xl"
+              src={`https://maps.google.com/maps?q=${event.latitude},${event.longitude}&z=15&output=embed`}
+            />
 
-              <div className="mt-4 text-gray-600">
-                {event.venue_name && (
-                  <p>
-                    📍 {event.venue_name}
-                  </p>
-                )}
+            <div className="mt-4 text-gray-600">
+              {event.venue_name && <p>📍 {event.venue_name}</p>}
 
-                {event.venue_address && (
-                 <p>
-                   {event.venue_address}
-                  </p>
-                )}
+              {event.venue_address && <p>{event.venue_address}</p>}
 
-                <p>
-                   {event.location}
-                </p>
-              </div>
+              <p>{event.location}</p>
             </div>
-          )}
+          </div>
+        )}
 
         {/* TICKETS */}
         <div className="bg-white p-6 rounded-2xl shadow-md space-y-4">
-          <h2 className="font-semibold text-lg">
-            Tickets
-          </h2>
+          <h2 className="font-semibold text-lg">Tickets</h2>
 
           {event.tickets?.map((ticket) => {
-            const isFull =
-              (ticket.sold || 0) >=
-              (ticket.quota || 0);
+            const isFull = (ticket.sold || 0) >= (ticket.quota || 0);
 
             return (
               <div
@@ -252,23 +223,15 @@ function EventDetail() {
                 <div>
                   <p>{ticket.name}</p>
 
-                  <p>
-                    {ticket.quota} seats
-                  </p>
+                  <p>{ticket.quota} seats</p>
                 </div>
 
                 <div>
-                  <p>
-                    Rp {formatCurrency(ticket.price)}
-                  </p>
+                  <p>Rp {formatCurrency(ticket.price)}</p>
 
-                  {!isFull && (
+                  {!isFull && !isOrganizer && (
                     <button
-                      onClick={() =>
-                        setSelectedTicket(
-                          ticket.id
-                        )
-                      }
+                      onClick={() => setSelectedTicket(ticket.id)}
                       className="bg-purple-600 text-white px-3 py-1 rounded"
                     >
                       Select
@@ -280,43 +243,48 @@ function EventDetail() {
           })}
         </div>
 
+        {isOrganizer && isOwner && (
+          <div className="bg-white p-6 rounded-2xl shadow-md">
+            <h2 className="text-lg font-semibold mb-3">Organizer Tools</h2>
+
+            <p className="text-gray-600 mb-4">
+              You are the organizer of this event.
+            </p>
+
+            <button
+              className="bg-purple-600 text-white px-4 py-2 rounded"
+              onClick={() => alert("Edit Event page coming next")}
+            >
+              Edit Event
+            </button>
+          </div>
+        )}
+
         {/* VOUCHERS */}
         {selectedTicket && (
           <div className="bg-white p-6 rounded-2xl shadow-md space-y-4">
-            <h2 className="font-semibold text-lg">
-              Vouchers
-            </h2>
+            <h2 className="font-semibold text-lg">Vouchers</h2>
 
             {userVouchers.map((v) => (
               <div
                 key={v.id}
                 className={`flex justify-between p-4 border rounded ${
-                  selectedVoucher === v.id
-                    ? "bg-purple-100"
-                    : ""
+                  selectedVoucher === v.id ? "bg-purple-100" : ""
                 }`}
               >
                 <div>
                   <p>{v.name}</p>
 
-                  <p>
-                    Rp {v.amount}
-                  </p>
+                  <p>Rp {v.amount}</p>
                 </div>
 
                 <button
                   onClick={() =>
-                    setSelectedVoucher(
-                      selectedVoucher === v.id
-                        ? null
-                        : v.id
-                    )
+                    setSelectedVoucher(selectedVoucher === v.id ? null : v.id)
                   }
                   className="bg-purple-600 text-white px-3 py-1 rounded"
                 >
-                  {selectedVoucher === v.id
-                    ? "Used"
-                    : "Use"}
+                  {selectedVoucher === v.id ? "Used" : "Use"}
                 </button>
               </div>
             ))}
@@ -332,66 +300,43 @@ function EventDetail() {
               type="number"
               min={1}
               value={quantity}
-              onChange={(e) =>
-                setQuantity(
-                  Number(e.target.value)
-                )
-              }
+              onChange={(e) => setQuantity(Number(e.target.value))}
             />
 
             <label>
               <input
                 type="checkbox"
                 checked={usePoints}
-                onChange={(e) =>
-                  setUsePoints(
-                    e.target.checked
-                  )
-                }
+                onChange={(e) => setUsePoints(e.target.checked)}
               />
               Use Points
             </label>
 
-            <p>
-              Total: Rp {totalPrice}
-            </p>
+            <p>Total: Rp {totalPrice}</p>
           </div>
         )}
 
         {/* PAYMENT */}
         {selectedTicket && (
           <div className="bg-white p-6 rounded-2xl shadow-md space-y-4">
-
             {!transaction && (
               <button
                 onClick={async () => {
                   try {
-                    const res =
-                      await createTransaction({
-                        ticket_id:
-                          selectedTicket!,
-                        quantity,
-                        use_points:
-                          usePoints,
-                        voucher_id:
-                          selectedVoucher,
-                      });
+                    const res = await createTransaction({
+                      ticket_id: selectedTicket!,
+                      quantity,
+                      use_points: usePoints,
+                      voucher_id: selectedVoucher,
+                    });
 
-                    setTransaction(
-                      res.data
-                    );
+                    setTransaction(res.data);
 
-                    alert(
-                      "✅ Transaction created!"
-                    );
+                    alert("✅ Transaction created!");
                   } catch (error: any) {
-                    console.error(
-                      error
-                    );
+                    console.error(error);
 
-                    alert(
-                      error.message
-                    );
+                    alert(error.message);
                   }
                 }}
                 className="bg-purple-600 hover:bg-purple-700 text-white w-full p-3 rounded"
@@ -403,22 +348,12 @@ function EventDetail() {
             {transaction && (
               <>
                 {/* PAYMENT PROOF */}
-                <h2 className="text-lg font-semibold">
-                  Upload Payment Proof
-                </h2>
+                <h2 className="text-lg font-semibold">Upload Payment Proof</h2>
 
                 {/* COUNTDOWN TIMER */}
                 <p className="text-red-500">
-                  Time left:{" "}
-                  {Math.floor(
-                    timeLeft / 60000
-                  )}
-                  :
-                  {Math.floor(
-                    (timeLeft %
-                      60000) /
-                      1000
-                  )
+                  Time left: {Math.floor(timeLeft / 60000)}:
+                  {Math.floor((timeLeft % 60000) / 1000)
                     .toString()
                     .padStart(2, "0")}
                 </p>
@@ -427,13 +362,8 @@ function EventDetail() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => {
-                    if (
-                      e.target.files?.[0]
-                    ) {
-                      setProof(
-                        e.target
-                          .files[0]
-                      );
+                    if (e.target.files?.[0]) {
+                      setProof(e.target.files[0]);
                     }
                   }}
                   className="border p-2 rounded w-full"
@@ -443,26 +373,15 @@ function EventDetail() {
                   onClick={async () => {
                     try {
                       if (!proof) {
-                        alert(
-                          "Please select an image"
-                        );
+                        alert("Please select an image");
                         return;
                       }
 
-                      await uploadPaymentProof(
-                        transaction.id,
-                        proof
-                      );
+                      await uploadPaymentProof(transaction.id, proof);
 
-                      alert(
-                        "✅ Payment proof uploaded!"
-                      );
-                    } catch (
-                      error: any
-                    ) {
-                      alert(
-                        error.message
-                      );
+                      alert("✅ Payment proof uploaded!");
+                    } catch (error: any) {
+                      alert(error.message);
                     }
                   }}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full"

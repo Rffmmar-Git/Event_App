@@ -1,5 +1,13 @@
 const API_URL = "http://localhost:5000/transactions";
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+};
+
 /* CREATE TRANSACTION */
 export const createTransaction = async (data: {
   ticket_id: number;
@@ -13,6 +21,7 @@ export const createTransaction = async (data: {
     /* REQUEST HEADERS */
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
 
     /* REQUEST BODY */
@@ -33,9 +42,10 @@ export const createTransaction = async (data: {
 
 /* GET TRANSACTIONS */
 export const getTransactions = async () => {
-  const res = await fetch(API_URL);
+  const res = await fetch(API_URL, {
+    headers: getAuthHeaders(),
+  });
 
-  /* HANDLE ERROR */
   if (!res.ok) {
     throw new Error(
       "Failed to fetch transactions"
@@ -61,12 +71,13 @@ export const uploadPaymentProof = async (
   );
 
   const res = await fetch(
-    `${API_URL}/${transactionId}/payment-proof`,
-    {
-      method: "PATCH",
-      body: formData,
-    }
-  );
+  `${API_URL}/${transactionId}/payment-proof`,
+  {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: formData,
+  }
+);
 
   /* HANDLE ERROR */
   if (!res.ok) {
@@ -85,10 +96,12 @@ export const getTransactionById = async (
   id: string
 ) => {
   const res = await fetch(
-    `${API_URL}/${id}`
+    `${API_URL}/${id}`,
+    {
+      headers: getAuthHeaders(),
+    }
   );
 
-  /* HANDLE ERROR */
   if (!res.ok) {
     throw new Error(
       "Failed to fetch transaction"
@@ -97,3 +110,64 @@ export const getTransactionById = async (
 
   return res.json();
 };
+
+/* GET ORGANIZER TRANSACTIONS */
+export const getOrganizerTransactions =
+  async () => {
+    const res = await fetch(
+      `${API_URL}/organizer`,
+      {
+        headers: getAuthHeaders(),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        "Failed to fetch organizer transactions"
+      );
+    }
+
+    const data = await res.json();
+
+    return data.data;
+  };
+
+/* APPROVE TRANSACTION */
+export const approveTransaction =
+  async (id: number) => {
+    const res = await fetch(
+      `${API_URL}/${id}/approve`,
+      {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        "Failed to approve transaction"
+      );
+    }
+
+    return res.json();
+  };
+
+/* REJECT TRANSACTION */
+export const rejectTransaction =
+  async (id: number) => {
+    const res = await fetch(
+      `${API_URL}/${id}/reject`,
+      {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        "Failed to reject transaction"
+      );
+    }
+
+    return res.json();
+  };

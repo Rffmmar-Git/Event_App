@@ -75,6 +75,10 @@ export const AuthProvider = ({
             "token"
           );
 
+          localStorage.removeItem(
+            "user"
+          );
+
           setUser(null);
         } finally {
           setLoading(false);
@@ -103,6 +107,11 @@ export const AuthProvider = ({
       token
     );
 
+    localStorage.setItem(
+      "user",
+      JSON.stringify(user)
+    );
+
     setToken(token);
     setUser(user);
   };
@@ -110,6 +119,10 @@ export const AuthProvider = ({
   const logout = () => {
     localStorage.removeItem(
       "token"
+    );
+
+    localStorage.removeItem(
+      "user"
     );
 
     setToken(null);

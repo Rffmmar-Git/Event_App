@@ -28,7 +28,7 @@ export type Event = {
   category: string;
   start_date: string;
   end_date: string;
-
+  organizer_id: number;
   tickets?: Ticket[];
 
   venue_name?: string;
