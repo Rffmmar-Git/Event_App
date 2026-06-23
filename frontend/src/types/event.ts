@@ -20,6 +20,17 @@ export type TicketForm = {
   quota: string;
 };
 
+export type Voucher = {
+  id: number;
+  event_id: number;
+  code: string;
+  discount_amount: number;
+  quota: number;
+  used_count: number;
+  start_date: string;
+  end_date: string;
+};
+
 export type Event = {
   id: number;
   title: string;
@@ -29,8 +40,10 @@ export type Event = {
   start_date: string;
   end_date: string;
   organizer_id: number;
-  tickets?: Ticket[];
 
+  tickets?: Ticket[];
+  vouchers?: Voucher[];
+  
   venue_name?: string;
   venue_address?: string;
   latitude?: number;

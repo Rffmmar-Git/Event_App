@@ -9,6 +9,8 @@ import {
 } from "../services/transactionService";
 import type { Event } from "../types/event";
 import { formatCurrency } from "../utils/formatCurrency";
+import { getEventVouchers } from "../services/voucherService";
+import type { Voucher } from "../types/voucher";
 
 function EventDetail() {
   /* ROUTE PARAMS */
@@ -23,6 +25,8 @@ function EventDetail() {
     useState<number | null>(null);
 
   const [quantity, setQuantity] = useState(1);
+
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
 
   const [transaction, setTransaction] =
     useState<any>(null);
@@ -49,7 +53,13 @@ function EventDetail() {
     if (!id) return;
 
     getEventById(id)
-      .then(setEvent)
+      .then(async (eventData) => {
+        setEvent(eventData);
+
+        const voucherData = await getEventVouchers(eventData.id);
+
+        setVouchers(voucherData);
+      })
       .catch(() => setEvent(null));
   }, [id]);
 
@@ -78,20 +88,6 @@ function EventDetail() {
     );
   }
 
-  /* TEMP USER VOUCHERS */
-  const userVouchers = [
-    {
-      id: 1,
-      name: "Discount 100K",
-      amount: 100000,
-    },
-    {
-      id: 2,
-      name: "Discount 250K",
-      amount: 250000,
-    },
-  ];
-
   /* PRICE CALCULATION */
   const selectedTicketData =
     event.tickets?.find(
@@ -103,9 +99,9 @@ function EventDetail() {
     quantity;
 
   const voucherDiscount =
-    userVouchers.find(
+    vouchers.find(
       (v) => v.id === selectedVoucher
-    )?.amount || 0;
+    )?.discount_amount || 0;
 
   const pointsDiscount = usePoints
     ? Math.min(
@@ -268,7 +264,7 @@ function EventDetail() {
           <div className="bg-white p-6 rounded-2xl shadow-md space-y-4">
             <h2 className="font-semibold text-lg">Vouchers</h2>
 
-            {userVouchers.map((v) => (
+            {vouchers.map((v) => (
               <div
                 key={v.id}
                 className={`flex justify-between p-4 border rounded ${
@@ -276,9 +272,12 @@ function EventDetail() {
                 }`}
               >
                 <div>
-                  <p>{v.name}</p>
+                  <p>{v.code}</p>
 
-                  <p>Rp {v.amount}</p>
+                  <p>Rp {v.discount_amount.toLocaleString(
+                    "id-ID"
+                  )}
+                  </p>
                 </div>
 
                 <button

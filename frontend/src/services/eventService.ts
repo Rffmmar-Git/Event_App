@@ -184,3 +184,102 @@ export const updateEvent = async (
 
   return data.data;
 };
+
+/* GET EVENT VOUCHERS */
+export const getEventVouchers = async (
+  eventId: number
+) => {
+  const API_BASE =
+    API_URL.replace("/events", "");
+
+  const res = await fetch(
+    `${API_BASE}/vouchers/event/${eventId}`
+  );
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      data.message ||
+      "Failed to fetch vouchers"
+    );
+  }
+
+  return data.data;
+};
+
+/* CREATE VOUCHER */
+export const createVoucher = async (
+  voucher: {
+    event_id: number;
+    code: string;
+    discount_amount: number;
+    quota: number;
+    start_date: string;
+    end_date: string;
+  }
+) => {
+  const API_BASE =
+    API_URL.replace("/events", "");
+
+  const token =
+    localStorage.getItem("token");
+
+  const res = await fetch(
+    `${API_BASE}/vouchers`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+        Authorization:
+          `Bearer ${token}`,
+      },
+      body: JSON.stringify(voucher),
+    }
+  );
+
+  const data =
+    await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      data.message
+    );
+  }
+
+  return data.data;
+};
+
+/* DELETE VOUCHER */
+export const deleteVoucher = async (
+  voucherId: number
+) => {
+  const API_BASE =
+    API_URL.replace("/events", "");
+
+  const token =
+    localStorage.getItem("token");
+
+  const res = await fetch(
+    `${API_BASE}/vouchers/${voucherId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization:
+          `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data =
+    await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      data.message
+    );
+  }
+
+  return data;
+};

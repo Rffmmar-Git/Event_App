@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { eventCategories } from "../constants/categories";
 import Navbar from "../components/Navbar";
-import { getEventById, updateEvent } from "../services/eventService";
+import {
+  getEventById,
+  updateEvent,
+  getEventVouchers,
+  createVoucher,
+  deleteVoucher,
+} from "../services/eventService";
 
-import type {
-  CreateEventPayload,
-  TicketForm
-} from "../types/event";
+import type { CreateEventPayload, TicketForm, Voucher } from "../types/event";
 
 type EditTicketForm = TicketForm & {
   id?: number;
@@ -15,13 +18,12 @@ type EditTicketForm = TicketForm & {
 
 function EditEvent() {
   const navigate = useNavigate();
-const { id } = useParams();
+  const { id } = useParams();
 
   /* STATES */
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState("event");
-  const [eventData, setEventData] =
-  useState<CreateEventPayload>({
+  const [eventData, setEventData] = useState<CreateEventPayload>({
     title: "",
     description: "",
     location: "",
@@ -38,21 +40,29 @@ const { id } = useParams();
     tickets: [],
   });
 
-const [tickets, setTickets] = useState<
-  EditTicketForm[]
->([
-  {
-    name: "",
-    price: "",
-    quota: "",
-  },
-]);
+  const [tickets, setTickets] = useState<EditTicketForm[]>([
+    {
+      name: "",
+      price: "",
+      quota: "",
+    },
+  ]);
 
-const [loading, setLoading] =
-  useState(false);
+  const [loading, setLoading] = useState(false);
 
-const [locationQuery, setLocationQuery] = 
-  useState("");
+  const [locationQuery, setLocationQuery] = useState("");
+
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+
+  const [voucherCode, setVoucherCode] = useState("");
+
+  const [voucherDiscount, setVoucherDiscount] = useState("");
+
+  const [voucherQuota, setVoucherQuota] = useState("");
+
+  const [voucherStartDate, setVoucherStartDate] = useState("");
+
+  const [voucherEndDate, setVoucherEndDate] = useState("");
 
   /* REFS */
   const eventRef = useRef<HTMLDivElement>(null);
@@ -63,7 +73,7 @@ const [locationQuery, setLocationQuery] =
   /* SCROLL TO SECTION */
   const scrollTo = (
     ref: React.RefObject<HTMLDivElement | null>,
-    key: string
+    key: string,
   ) => {
     setActiveSection(key);
 
@@ -72,6 +82,13 @@ const [locationQuery, setLocationQuery] =
       block: "start",
     });
   };
+
+  /* LOAD EVENT VOUCHERS */
+  useEffect(() => {
+    if (!id) return;
+
+    getEventVouchers(Number(id)).then(setVouchers).catch(console.error);
+  }, [id]);
 
   /* SCROLL SPY */
   useEffect(() => {
@@ -86,9 +103,7 @@ const [locationQuery, setLocationQuery] =
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const found = sections.find(
-              (s) => s.ref.current === entry.target
-            );
+            const found = sections.find((s) => s.ref.current === entry.target);
 
             if (found) {
               setActiveSection(found.key);
@@ -99,7 +114,7 @@ const [locationQuery, setLocationQuery] =
       {
         rootMargin: "-120px 0px -60% 0px",
         threshold: 0.1,
-      }
+      },
     );
 
     sections.forEach((section) => {
@@ -113,111 +128,92 @@ const [locationQuery, setLocationQuery] =
 
   /* HANDLE BANNER UPLOAD */
   const addTicket = () => {
-  setTickets((prev) => [
-    ...prev,
-    {
-      name: "",
-      price: "",
-      quota: "",
-    },
-  ]);
-};
+    setTickets((prev) => [
+      ...prev,
+      {
+        name: "",
+        price: "",
+        quota: "",
+      },
+    ]);
+  };
 
-useEffect(() => {
-  if (!id) return;
-
-  getEventById(id)
-    .then((event) => {
-      setEventData({
-        title: event.title || "",
-        description: event.description || "",
-        location: event.location || "",
-        category: event.category || "",
-        start_date: event.start_date
-          ? event.start_date.slice(0, 16)
-          : "",
-        end_date: event.end_date
-          ? event.end_date.slice(0, 16)
-          : "",
-        venue_name: event.venue_name || "",
-        venue_address: event.venue_address || "",
-        latitude: event.latitude,
-        longitude: event.longitude,
-        tickets: [],
-      });
-
-      setTickets(
-        event.tickets?.map((ticket) => ({
-          id: ticket.id,
-          name: ticket.name,
-          price: String(ticket.price),
-          quota: String(ticket.quota),
-        })) || []
-      );
-    })
-    .catch(console.error);
-}, [id]);
-
-const updateTicket = (
-  index: number,
-  field: keyof TicketForm,
-  value: string
-) => {
-  const updated = [...tickets];
-
-  updated[index] = {
-    ...updated[index],
-    [field]: value,
-  } as any;
-
-  setTickets(updated);
-};
-
-const handlePublish = async () => {
-  try {
+  useEffect(() => {
     if (!id) return;
 
-    setLoading(true);
+    getEventById(id)
+      .then((event) => {
+        setEventData({
+          title: event.title || "",
+          description: event.description || "",
+          location: event.location || "",
+          category: event.category || "",
+          start_date: event.start_date ? event.start_date.slice(0, 16) : "",
+          end_date: event.end_date ? event.end_date.slice(0, 16) : "",
+          venue_name: event.venue_name || "",
+          venue_address: event.venue_address || "",
+          latitude: event.latitude,
+          longitude: event.longitude,
+          tickets: [],
+        });
 
-    await updateEvent(
-      Number(id),
-      {
+        setTickets(
+          event.tickets?.map((ticket) => ({
+            id: ticket.id,
+            name: ticket.name,
+            price: String(ticket.price),
+            quota: String(ticket.quota),
+          })) || [],
+        );
+      })
+      .catch(console.error);
+  }, [id]);
+
+  const updateTicket = (
+    index: number,
+    field: keyof TicketForm,
+    value: string,
+  ) => {
+    const updated = [...tickets];
+
+    updated[index] = {
+      ...updated[index],
+      [field]: value,
+    } as any;
+
+    setTickets(updated);
+  };
+
+  const handlePublish = async () => {
+    try {
+      if (!id) return;
+
+      setLoading(true);
+
+      await updateEvent(Number(id), {
         ...eventData,
 
-        tickets: tickets.map(
-          (ticket) => ({
-            id: ticket.id,
-            name: ticket.name.trim(),
-            price: Number(
-              ticket.price
-            ),
-            quota: Number(
-              ticket.quota
-            ),
-          })
-        ),
-      } as any
-    );
+        tickets: tickets.map((ticket) => ({
+          id: ticket.id,
+          name: ticket.name.trim(),
+          price: Number(ticket.price),
+          quota: Number(ticket.quota),
+        })),
+      } as any);
 
-    alert(
-      "Event updated successfully"
-    );
+      alert("Event updated successfully");
 
-    navigate(
-      `/events/${id}`
-    );
-  } catch (error) {
-    console.error(error);
+      navigate(`/events/${id}`);
+    } catch (error) {
+      console.error(error);
 
-    alert(
-      "Failed to update event"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+      alert("Failed to update event");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleSearchLocation = async() => {
+  const handleSearchLocation = async () => {
     try {
       if (!locationQuery.trim()) {
         alert("Please enter a location");
@@ -225,39 +221,75 @@ const handlePublish = async () => {
       }
 
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationQuery
-        )}`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          locationQuery,
+        )}`,
       );
       const data = await response.json();
 
-    if (!data.length) {
-      alert("Location not found");
-      return;
+      if (!data.length) {
+        alert("Location not found");
+        return;
+      }
+
+      const result = data[0];
+
+      setEventData((prev) => ({
+        ...prev,
+        latitude: Number(result.lat),
+        longitude: Number(result.lon),
+      }));
+
+      alert("location found!");
+    } catch (error) {
+      console.error(error);
+
+      alert("Failed to search location");
     }
+  };
 
-    const result = data[0];
-
-    setEventData((prev) => ({
-      ...prev,
-      latitude: Number(result.lat),
-      longitude: Number(result.lon),
-    }));
-
-    alert("location found!");
-  } catch (error) {
-    console.error(error);
-
-    alert("Failed to search location");
-  }
-};
-
-  const handleBanner = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleBanner = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setBannerPreview(
-        URL.createObjectURL(e.target.files[0])
-      );
+      setBannerPreview(URL.createObjectURL(e.target.files[0]));
+    }
+  };
+
+  const handleCreateVoucher = async () => {
+    try {
+      if (!id) return;
+
+      const voucher = await createVoucher({
+        event_id: Number(id),
+        code: voucherCode,
+        discount_amount: Number(voucherDiscount),
+        quota: Number(voucherQuota),
+        start_date: voucherStartDate,
+        end_date: voucherEndDate,
+      });
+
+      setVouchers((prev) => [voucher, ...prev]);
+
+      setVoucherCode("");
+      setVoucherDiscount("");
+      setVoucherQuota("");
+      setVoucherStartDate("");
+      setVoucherEndDate("");
+
+      alert("Voucher created!");
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const handleDeleteVoucher = async (voucherId: number) => {
+    try {
+      await deleteVoucher(voucherId);
+
+      setVouchers((prev) => prev.filter((v) => v.id !== voucherId));
+
+      alert("Voucher deleted!");
+    } catch (error: any) {
+      alert(error.message);
     }
   };
 
@@ -267,11 +299,9 @@ const handlePublish = async () => {
 
       {/* MAIN */}
       <div className="pt-28 pb-32 max-w-7xl mx-auto px-6 flex gap-10">
-
         {/* SIDEBAR */}
         <div className="w-60 hidden md:block">
           <div className="sticky top-28 space-y-4">
-
             {[
               {
                 label: "Event Info",
@@ -296,9 +326,7 @@ const handlePublish = async () => {
             ].map((item) => (
               <button
                 key={item.key}
-                onClick={() =>
-                  scrollTo(item.ref, item.key)
-                }
+                onClick={() => scrollTo(item.ref, item.key)}
                 className={`block w-full text-left transition ${
                   activeSection === item.key
                     ? "text-purple-600 font-semibold"
@@ -308,21 +336,17 @@ const handlePublish = async () => {
                 {item.label}
               </button>
             ))}
-
           </div>
         </div>
 
         {/* CONTENT */}
         <div className="flex-1 space-y-10">
-
           {/* EVENT INFORMATION */}
           <div
             ref={eventRef}
             className="scroll-mt-32 bg-white p-6 rounded-2xl shadow"
           >
-            <h2 className="text-xl font-bold mb-4">
-              Event Information
-            </h2>
+            <h2 className="text-xl font-bold mb-4">Event Information</h2>
 
             <label className="block border-2 border-dashed rounded-xl p-10 text-center cursor-pointer mb-4">
               {bannerPreview ? (
@@ -334,11 +358,7 @@ const handlePublish = async () => {
                 "Upload Banner"
               )}
 
-              <input
-                type="file"
-                hidden
-                onChange={handleBanner}
-              />
+              <input type="file" hidden onChange={handleBanner} />
             </label>
 
             <input
@@ -353,7 +373,7 @@ const handlePublish = async () => {
               className="w-full p-3 border rounded-xl mb-3"
             />
 
-            <select 
+            <select
               value={eventData.category}
               onChange={(e) =>
                 setEventData({
@@ -363,20 +383,13 @@ const handlePublish = async () => {
               }
               className="w-full p-3 border rounded-xl mb-3"
             >
-              <option value="">
-                Select Category
-              </option>
+              <option value="">Select Category</option>
 
-              {eventCategories.map(
-                (category) => (
-                  <option
-                  key={category}
-                  value={category}
-                  >
-                    {category}
-                  </option>
-                )
-              )}
+              {eventCategories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
             </select>
 
             <textarea
@@ -402,9 +415,7 @@ const handlePublish = async () => {
             ref={scheduleRef}
             className="scroll-mt-32 bg-white p-6 rounded-2xl shadow"
           >
-            <h2 className="text-xl font-bold mb-4">
-              Schedule & Location
-            </h2>
+            <h2 className="text-xl font-bold mb-4">Schedule & Location</h2>
 
             <input
               value={eventData.location}
@@ -469,12 +480,9 @@ const handlePublish = async () => {
             />
 
             <div className="space-y-4">
-
               <input
                 value={locationQuery}
-                onChange={(e) =>
-                  setLocationQuery(e.target.value)
-                }
+                onChange={(e) => setLocationQuery(e.target.value)}
                 placeholder="Search Location (Ancol Beach City Jakarta)"
                 className="w-full p-3 border rounded-xl"
               />
@@ -498,7 +506,6 @@ const handlePublish = async () => {
                 />
               )}
             </div>
-
           </div>
 
           {/* TICKETS */}
@@ -506,76 +513,56 @@ const handlePublish = async () => {
             ref={ticketsRef}
             className="scroll-mt-32 bg-white p-6 rounded-2xl shadow"
           >
-            <h2 className="text-xl font-bold mb-4">
-              Tickets & Pricing
-            </h2>
+            <h2 className="text-xl font-bold mb-4">Tickets & Pricing</h2>
 
             {tickets.map((ticket, index) => (
-              <div
-                key={index}
-                className="border p-4 rounded-xl mb-4"
-              >
-                <p className="font-semibold mb-2">
-                  Ticket Type #{index + 1}
-                </p>
+              <div key={index} className="border p-4 rounded-xl mb-4">
+                <p className="font-semibold mb-2">Ticket Type #{index + 1}</p>
 
                 <div className="flex flex-col md:flex-row gap-3">
                   <input
-                   value={ticket.name}
-                   onChange={(e) =>
-                    updateTicket(
-                      index,
-                      "name",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Ticket Name (VIP, General Admission...)"
-                  className="w-full p-3 border rounded-xl"
-                />
-
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={ticket.price}
-                  onChange={(e) => {
-                    const value = e.target.value;
-
-                    if (/^\d*$/.test(value)) {
-                      updateTicket(
-                        index,
-                        "price",
-                        value
-                      );
+                    value={ticket.name}
+                    onChange={(e) =>
+                      updateTicket(index, "name", e.target.value)
                     }
-                  }}
-                  placeholder="Price (IDR)"
-                  className="w-full p-3 border rounded-xl"
-                />
+                    placeholder="Ticket Name (VIP, General Admission...)"
+                    className="w-full p-3 border rounded-xl"
+                  />
 
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={ticket.quota}
-                  onChange={(e) => {
-                    const value = e.target.value;
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={ticket.price}
+                    onChange={(e) => {
+                      const value = e.target.value;
 
-                    if (/^\d*$/.test(value)) {
-                      updateTicket(
-                        index,
-                        "quota",
-                        value
-                      );
-                    }
-                  }}
+                      if (/^\d*$/.test(value)) {
+                        updateTicket(index, "price", value);
+                      }
+                    }}
+                    placeholder="Price (IDR)"
+                    className="w-full p-3 border rounded-xl"
+                  />
 
-                  placeholder="Quota"
-                  className="w-full p-3 border rounded-xl"
-                />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={ticket.quota}
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      if (/^\d*$/.test(value)) {
+                        updateTicket(index, "quota", value);
+                      }
+                    }}
+                    placeholder="Quota"
+                    className="w-full p-3 border rounded-xl"
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
 
-            <button 
+            <button
               type="button"
               onClick={addTicket}
               className="border-dashed border w-full p-3 rounded-xl text-purple-600 hover:bg-purple-50"
@@ -589,43 +576,105 @@ const handlePublish = async () => {
             ref={promoRef}
             className="scroll-mt-32 bg-white p-6 rounded-2xl shadow"
           >
-            <h2 className="text-xl font-bold mb-4">
-              Promotions
-            </h2>
+            <h2 className="text-xl font-bold mb-4">Event Vouchers</h2>
 
-            <input
-              placeholder="Voucher Code"
-              className="w-full p-3 border rounded-xl mb-3"
-            />
-
-            <input
-              placeholder="Discount %"
-              className="w-full p-3 border rounded-xl mb-3"
-            />
-
-            <div className="flex gap-4">
+            {/* CREATE VOUCHER */}
+            <div className="space-y-3 mb-6">
               <input
-                type="date"
+                value={voucherCode}
+                onChange={(e) => setVoucherCode(e.target.value)}
+                placeholder="Voucher Code"
                 className="w-full p-3 border rounded-xl"
               />
 
               <input
-                type="date"
+                type="number"
+                value={voucherDiscount}
+                onChange={(e) => setVoucherDiscount(e.target.value)}
+                placeholder="Discount Amount (IDR)"
                 className="w-full p-3 border rounded-xl"
               />
+
+              <input
+                type="number"
+                value={voucherQuota}
+                onChange={(e) => setVoucherQuota(e.target.value)}
+                placeholder="Voucher Quota"
+                className="w-full p-3 border rounded-xl"
+              />
+
+              <div className="flex gap-4">
+                <input
+                  type="date"
+                  value={voucherStartDate}
+                  onChange={(e) => setVoucherStartDate(e.target.value)}
+                  className="w-full p-3 border rounded-xl"
+                />
+
+                <input
+                  type="date"
+                  value={voucherEndDate}
+                  onChange={(e) => setVoucherEndDate(e.target.value)}
+                  className="w-full p-3 border rounded-xl"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleCreateVoucher}
+                className="w-full p-3 bg-purple-600 text-white rounded-xl"
+              >
+                Create Voucher
+              </button>
+            </div>
+
+            {/* VOUCHER LIST */}
+            <div className="space-y-3">
+              {vouchers.length === 0 ? (
+                <p className="text-gray-500">No vouchers created yet.</p>
+              ) : (
+                vouchers.map((voucher) => (
+                  <div
+                    key={voucher.id}
+                    className="border rounded-xl p-4 flex justify-between items-center"
+                  >
+                    <div>
+                      <h3 className="font-semibold">{voucher.code}</h3>
+
+                      <p className="text-sm text-gray-500">
+                        Discount: Rp{" "}
+                        {voucher.discount_amount.toLocaleString("id-ID")}
+                      </p>
+
+                      <p className="text-sm text-gray-500">
+                        Quota: {voucher.quota}
+                      </p>
+
+                      <p className="text-sm text-gray-500">
+                        Used: {voucher.used_count}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteVoucher(voucher.id)}
+                      className="bg-red-500 text-white px-4 py-2 rounded-lg"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-
         </div>
       </div>
 
       {/* BOTTOM ACTION BAR */}
       <div className="fixed bottom-0 left-0 w-full bg-white border-t px-6 py-4 flex justify-between items-center z-50">
-        <button className="px-6 py-3 bg-gray-200 rounded-xl">
-          Discard
-        </button>
+        <button className="px-6 py-3 bg-gray-200 rounded-xl">Discard</button>
 
-        <button 
+        <button
           onClick={handlePublish}
           disabled={loading}
           className="px-6 py-3 bg-purple-600 text-white rounded-xl disabled:opacity-50"
