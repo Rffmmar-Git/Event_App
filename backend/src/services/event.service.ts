@@ -85,10 +85,9 @@ export const getAllEvents = async (query: any) => {
 
 /* GET EVENT BY ID */
 export const getEventByIdService = async (id: number) => {
-  return await prisma.events.findUnique({
+  const event = await prisma.events.findUnique({
     where: { id },
 
-    /* INCLUDE RELATED DATA */
     include: {
       tickets: true,
       vouchers: true,
@@ -97,10 +96,54 @@ export const getEventByIdService = async (id: number) => {
         select: {
           id: true,
           name: true,
-        }
-      }
+        },
+      },
     },
   });
+
+  if (!event || !event.organizer_id) {
+    return event;
+  }
+
+  const organizerReviews =
+    await prisma.reviews.findMany({
+      where: {
+        events: {
+          organizer_id:
+            event.organizer_id,
+        },
+      },
+
+      select: {
+        rating: true,
+      },
+    });
+
+  const reviewCount =
+    organizerReviews.length;
+
+  const averageRating =
+    reviewCount > 0
+      ? Number(
+          (
+            organizerReviews.reduce(
+              (sum, review) =>
+                sum +
+                (review.rating || 0),
+              0
+            ) / reviewCount
+          ).toFixed(1)
+        )
+      : 0;
+
+  return {
+    ...event,
+
+    organizer_rating: {
+      average: averageRating,
+      count: reviewCount,
+    },
+  };
 };
 
 /* GET MY EVENTS */

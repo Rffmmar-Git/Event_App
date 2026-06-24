@@ -95,10 +95,17 @@ const selectedTicketData =
             </span>
           </div>
 
-          <p className="text-gray-600 mt-3">
-            Organized by{" "}
-            <span className="font-semibold">{event.users?.name}</span>
-          </p>
+          <div className="mt-3">
+            <p className="text-gray-600">
+              Organized by{" "}
+              <span className="font-semibold">{event.users?.name}</span>
+            </p>
+
+            <p className="text-yellow-600 font-medium mt-1">
+              ⭐ {event.organizer_rating?.average || 0} Star Rating (
+              {event.organizer_rating?.count || 0} reviews)
+            </p>
+          </div>
 
           <div className="space-y-1 text-gray-600">
             {event.venue_name && <p>📍 {event.venue_name}</p>}

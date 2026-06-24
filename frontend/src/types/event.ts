@@ -44,7 +44,12 @@ export type Event = {
   users?: {
     id: number;
     name: string;
-  }
+  };
+
+  organizer_rating?: {
+    average: number;
+    count: number;
+  };
 
   tickets?: Ticket[];
   vouchers?: Voucher[];
