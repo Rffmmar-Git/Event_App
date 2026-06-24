@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getEventById } from "../services/eventService";
 import type { Event } from "../types/event";
-import { getEventReviews, createReview } from "../services/reviewService";
+import { getEventReviews } from "../services/reviewService";
 import { formatCurrency } from "../utils/formatCurrency";
 
 function EventDetail() {
@@ -20,10 +20,6 @@ function EventDetail() {
   const [quantity, setQuantity] = useState(1);
 
   const [reviews, setReviews] = useState<any[]>([]);
-
-  const [rating, setRating] = useState(5);
-
-  const [comment, setComment] = useState("");
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -92,6 +88,17 @@ const selectedTicketData =
         {/* EVENT INFORMATION */}
         <div className="bg-white p-6 rounded-2xl shadow-md space-y-4">
           <h1 className="text-3xl font-bold">{event.title}</h1>
+
+          <div className="flex items-center gap-3 mt-2">
+            <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
+              {event.category}
+            </span>
+          </div>
+
+          <p className="text-gray-600 mt-3">
+            Organized by{" "}
+            <span className="font-semibold">{event.users?.name}</span>
+          </p>
 
           <div className="space-y-1 text-gray-600">
             {event.venue_name && <p>📍 {event.venue_name}</p>}
@@ -305,56 +312,6 @@ const selectedTicketData =
                   <p className="text-gray-700 mt-2">{review.comment}</p>
                 </div>
               ))}
-            </div>
-          )}
-
-          {!isOrganizer && (
-            <div className="mt-6 border-t pt-4">
-              <h3 className="font-semibold mb-3">Leave a Review</h3>
-
-              <select
-                value={rating}
-                onChange={(e) => setRating(Number(e.target.value))}
-                className="w-full border p-3 rounded-xl mb-3"
-              >
-                <option value={5}>⭐⭐⭐⭐⭐</option>
-                <option value={4}>⭐⭐⭐⭐</option>
-                <option value={3}>⭐⭐⭐</option>
-                <option value={2}>⭐⭐</option>
-                <option value={1}>⭐</option>
-              </select>
-
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Share your experience..."
-                className="w-full border p-3 rounded-xl mb-3"
-              />
-
-              <button
-                onClick={async () => {
-                  try {
-                    await createReview({
-                      event_id: event.id,
-                      rating,
-                      comment,
-                    });
-
-                    const updated = await getEventReviews(event.id);
-
-                    setReviews(updated);
-
-                    setComment("");
-
-                    alert("Review submitted");
-                  } catch (error: any) {
-                    alert(error.message);
-                  }
-                }}
-                className="bg-purple-600 text-white px-4 py-2 rounded-xl"
-              >
-                Submit Review
-              </button>
             </div>
           )}
         </div>

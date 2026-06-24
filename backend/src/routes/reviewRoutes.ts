@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   createReview,
   getEventReviews,
+  getMyReview,
 } from "../controllers/reviewController";
 
 import {
@@ -22,6 +23,12 @@ router.post(
   "/",
   verifyToken,
   createReview
+);
+
+router.get(
+  "/my/:eventId",
+  verifyToken,
+  getMyReview
 );
 
 export default router;

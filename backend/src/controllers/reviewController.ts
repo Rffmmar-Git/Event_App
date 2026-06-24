@@ -7,6 +7,7 @@ import {
 import {
   createReviewService,
   getEventReviewsService,
+  getUserReviewService,
 } from "../services/review.service";
 
 /* CREATE REVIEW */
@@ -65,3 +66,32 @@ export const getEventReviews =
       });
     }
   };
+
+  /* GET MY REVIEW */
+export const getMyReview = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const eventId = Number(
+      req.params.eventId
+    );
+
+    const review =
+      await getUserReviewService(
+        req.user!.id,
+        eventId
+      );
+
+    return res.status(200).json({
+      success: true,
+      data: review,
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to fetch review",
+    });
+  }
+};

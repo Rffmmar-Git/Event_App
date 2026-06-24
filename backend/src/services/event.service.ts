@@ -92,6 +92,13 @@ export const getEventByIdService = async (id: number) => {
     include: {
       tickets: true,
       vouchers: true,
+
+      users: {
+        select: {
+          id: true,
+          name: true,
+        }
+      }
     },
   });
 };

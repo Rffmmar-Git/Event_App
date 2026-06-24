@@ -96,3 +96,16 @@ export const getEventReviewsService =
       },
     });
   };
+
+  /* GET USER REVIEW FOR EVENT */
+export const getUserReviewService = async (
+  userId: number,
+  eventId: number
+) => {
+  return await prisma.reviews.findFirst({
+    where: {
+      user_id: userId,
+      event_id: eventId,
+    },
+  });
+};

@@ -41,6 +41,11 @@ export type Event = {
   end_date: string;
   organizer_id: number;
 
+  users?: {
+    id: number;
+    name: string;
+  }
+
   tickets?: Ticket[];
   vouchers?: Voucher[];
 
