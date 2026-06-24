@@ -283,3 +283,32 @@ export const deleteVoucher = async (
 
   return data;
 };
+
+/* GET EVENT ATTENDEES */
+export const getEventAttendees = async (
+  eventId: string
+) => {
+  const token =
+    localStorage.getItem("token");
+
+  const res = await fetch(
+    `${API_URL}/${eventId}/attendees`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data =
+    await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      data.message ||
+        "Failed to fetch attendees"
+    );
+  }
+
+  return data.data;
+};

@@ -293,3 +293,59 @@ export const updateEventService = async (
     });
   });
 };
+
+/* GET EVENT ATTENDEES */
+export const getEventAttendeesService =
+  async (
+    eventId: number,
+    organizerId: number
+  ) => {
+    const event =
+      await prisma.events.findUnique({
+        where: {
+          id: eventId,
+        },
+      });
+
+    if (!event) {
+      throw new Error(
+        "Event not found"
+      );
+    }
+
+    if (
+      event.organizer_id !==
+      organizerId
+    ) {
+      throw new Error(
+        "Unauthorized"
+      );
+    }
+
+    return await prisma.transactions.findMany({
+      where: {
+        event_id: eventId,
+        status: "DONE",
+      },
+
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+
+        transaction_items: {
+          include: {
+            tickets: true,
+          },
+        },
+      },
+
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+  };

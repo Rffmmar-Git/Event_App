@@ -47,6 +47,10 @@ export const createTransactionService = async (
         throw new Error("Voucher not found");
       }
 
+      if (voucher.event_id !== ticket.event_id) {
+        throw new Error("Voucher does not belong to this event");
+      }
+
       const now = new Date();
 
       if (voucher.start_date! > now || voucher.end_date! < now) {
@@ -59,16 +63,6 @@ export const createTransactionService = async (
 
       discount = voucher.discount_amount || 0;
       voucherUsed = true;
-
-      /* UPDATE VOUCHER USAGE */
-      await tx.vouchers.update({
-        where: { id: voucher_id },
-        data: {
-          used_count: {
-            increment: 1,
-          },
-        },
-      });
     }
 
     const user = await tx.users.findUnique({
@@ -156,13 +150,18 @@ export const getOrganizerTransactionsService =
     return await prisma.transactions.findMany({
       where: {
         events: {
-          organizer_id:
-            organizerId,
+          organizer_id: organizerId,
         },
       },
 
       include: {
-        users: true,
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
 
         events: true,
 
@@ -184,36 +183,54 @@ export const approveTransactionService =
   async (
     transactionId: number
   ) => {
-    const transaction =
-      await prisma.transactions.findUnique({
-        where: {
-          id: transactionId,
-        },
-      });
+    return await prisma.$transaction(
+      async (tx) => {
+        const transaction =
+          await tx.transactions.findUnique({
+            where: {
+              id: transactionId,
+            },
+          });
 
-    if (!transaction) {
-      throw new Error(
-        "Transaction not found"
-      );
-    }
+        if (!transaction) {
+          throw new Error(
+            "Transaction not found"
+          );
+        }
 
-    if (
-      transaction.status !==
-      "WAITING_CONFIRMATION"
-    ) {
-      throw new Error(
-        "Transaction cannot be approved"
-      );
-    }
+        if (
+          transaction.status !==
+          "WAITING_CONFIRMATION"
+        ) {
+          throw new Error(
+            "Transaction cannot be approved"
+          );
+        }
 
-    return await prisma.transactions.update({
-      where: {
-        id: transactionId,
-      },
-      data: {
-        status: "DONE",
-      },
-    });
+        /* CONSUME VOUCHER */
+        if (transaction.voucher_id) {
+          await tx.vouchers.update({
+            where: {
+              id: transaction.voucher_id,
+            },
+            data: {
+              used_count: {
+                increment: 1,
+              },
+            },
+          });
+        }
+
+        return await tx.transactions.update({
+          where: {
+            id: transactionId,
+          },
+          data: {
+            status: "DONE",
+          },
+        });
+      }
+    );
   };
 
 /* REJECT TRANSACTION */

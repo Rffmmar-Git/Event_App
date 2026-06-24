@@ -5,6 +5,8 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
+import Checkout from "./pages/Checkout";
+import Payment from "./pages/Payment";
 import CreateEvent from "./pages/CreateEvent";
 import TransactionHistory from "./pages/TransactionHistory";
 import Inbox from "./pages/Inbox";
@@ -14,6 +16,7 @@ import OrganizerTransactions from "./pages/OrganizerTransactions";
 import EditEvent from "./pages/EditEvent";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import OrganizerRoute from "./routes/OrganizerRoute";
+import EventAttendees from "./pages/EventAttendees";
 
 function App() {
   return (
@@ -49,6 +52,15 @@ function App() {
       />
 
       <Route
+        path="/events/:id/attendees"
+        element={
+          <OrganizerRoute>
+            <EventAttendees />
+          </OrganizerRoute>
+        }
+      />
+
+      <Route
         path="/organizer-transactions"
         element={
           <OrganizerRoute>
@@ -72,6 +84,24 @@ function App() {
         element={
           <ProtectedRoute>
             <TransactionHistory />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/checkout"
+        element={
+          <ProtectedRoute>
+            <Checkout />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/payment/:id"
+        element={
+          <ProtectedRoute>
+            <Payment />
           </ProtectedRoute>
         }
       />

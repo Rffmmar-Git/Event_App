@@ -224,11 +224,9 @@ const handlePublish = async () => {
 
       {/* MAIN */}
       <div className="pt-28 pb-32 max-w-7xl mx-auto px-6 flex gap-10">
-
         {/* SIDEBAR */}
         <div className="w-60 hidden md:block">
           <div className="sticky top-28 space-y-4">
-
             {[
               {
                 label: "Event Info",
@@ -253,9 +251,7 @@ const handlePublish = async () => {
             ].map((item) => (
               <button
                 key={item.key}
-                onClick={() =>
-                  scrollTo(item.ref, item.key)
-                }
+                onClick={() => scrollTo(item.ref, item.key)}
                 className={`block w-full text-left transition ${
                   activeSection === item.key
                     ? "text-purple-600 font-semibold"
@@ -265,21 +261,17 @@ const handlePublish = async () => {
                 {item.label}
               </button>
             ))}
-
           </div>
         </div>
 
         {/* CONTENT */}
         <div className="flex-1 space-y-10">
-
           {/* EVENT INFORMATION */}
           <div
             ref={eventRef}
             className="scroll-mt-32 bg-white p-6 rounded-2xl shadow"
           >
-            <h2 className="text-xl font-bold mb-4">
-              Event Information
-            </h2>
+            <h2 className="text-xl font-bold mb-4">Event Information</h2>
 
             <label className="block border-2 border-dashed rounded-xl p-10 text-center cursor-pointer mb-4">
               {bannerPreview ? (
@@ -291,11 +283,7 @@ const handlePublish = async () => {
                 "Upload Banner"
               )}
 
-              <input
-                type="file"
-                hidden
-                onChange={handleBanner}
-              />
+              <input type="file" hidden onChange={handleBanner} />
             </label>
 
             <input
@@ -310,7 +298,7 @@ const handlePublish = async () => {
               className="w-full p-3 border rounded-xl mb-3"
             />
 
-            <select 
+            <select
               value={eventData.category}
               onChange={(e) =>
                 setEventData({
@@ -320,20 +308,13 @@ const handlePublish = async () => {
               }
               className="w-full p-3 border rounded-xl mb-3"
             >
-              <option value="">
-                Select Category
-              </option>
+              <option value="">Select Category</option>
 
-              {eventCategories.map(
-                (category) => (
-                  <option
-                  key={category}
-                  value={category}
-                  >
-                    {category}
-                  </option>
-                )
-              )}
+              {eventCategories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
             </select>
 
             <textarea
@@ -359,9 +340,7 @@ const handlePublish = async () => {
             ref={scheduleRef}
             className="scroll-mt-32 bg-white p-6 rounded-2xl shadow"
           >
-            <h2 className="text-xl font-bold mb-4">
-              Schedule & Location
-            </h2>
+            <h2 className="text-xl font-bold mb-4">Schedule & Location</h2>
 
             <input
               value={eventData.location}
@@ -426,12 +405,9 @@ const handlePublish = async () => {
             />
 
             <div className="space-y-4">
-
               <input
                 value={locationQuery}
-                onChange={(e) =>
-                  setLocationQuery(e.target.value)
-                }
+                onChange={(e) => setLocationQuery(e.target.value)}
                 placeholder="Search Location (Ancol Beach City Jakarta)"
                 className="w-full p-3 border rounded-xl"
               />
@@ -455,7 +431,6 @@ const handlePublish = async () => {
                 />
               )}
             </div>
-
           </div>
 
           {/* TICKETS */}
@@ -463,76 +438,56 @@ const handlePublish = async () => {
             ref={ticketsRef}
             className="scroll-mt-32 bg-white p-6 rounded-2xl shadow"
           >
-            <h2 className="text-xl font-bold mb-4">
-              Tickets & Pricing
-            </h2>
+            <h2 className="text-xl font-bold mb-4">Tickets & Pricing</h2>
 
             {tickets.map((ticket, index) => (
-              <div
-                key={index}
-                className="border p-4 rounded-xl mb-4"
-              >
-                <p className="font-semibold mb-2">
-                  Ticket Type #{index + 1}
-                </p>
+              <div key={index} className="border p-4 rounded-xl mb-4">
+                <p className="font-semibold mb-2">Ticket Type #{index + 1}</p>
 
                 <div className="flex flex-col md:flex-row gap-3">
                   <input
-                   value={ticket.name}
-                   onChange={(e) =>
-                    updateTicket(
-                      index,
-                      "name",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Ticket Name (VIP, General Admission...)"
-                  className="w-full p-3 border rounded-xl"
-                />
-
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={ticket.price}
-                  onChange={(e) => {
-                    const value = e.target.value;
-
-                    if (/^\d*$/.test(value)) {
-                      updateTicket(
-                        index,
-                        "price",
-                        value
-                      );
+                    value={ticket.name}
+                    onChange={(e) =>
+                      updateTicket(index, "name", e.target.value)
                     }
-                  }}
-                  placeholder="Price (IDR)"
-                  className="w-full p-3 border rounded-xl"
-                />
+                    placeholder="Ticket Name (VIP, General Admission...)"
+                    className="w-full p-3 border rounded-xl"
+                  />
 
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={ticket.quota}
-                  onChange={(e) => {
-                    const value = e.target.value;
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={ticket.price}
+                    onChange={(e) => {
+                      const value = e.target.value;
 
-                    if (/^\d*$/.test(value)) {
-                      updateTicket(
-                        index,
-                        "quota",
-                        value
-                      );
-                    }
-                  }}
+                      if (/^\d*$/.test(value)) {
+                        updateTicket(index, "price", value);
+                      }
+                    }}
+                    placeholder="Price (IDR)"
+                    className="w-full p-3 border rounded-xl"
+                  />
 
-                  placeholder="Quota"
-                  className="w-full p-3 border rounded-xl"
-                />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={ticket.quota}
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      if (/^\d*$/.test(value)) {
+                        updateTicket(index, "quota", value);
+                      }
+                    }}
+                    placeholder="Quota"
+                    className="w-full p-3 border rounded-xl"
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
 
-            <button 
+            <button
               type="button"
               onClick={addTicket}
               className="border-dashed border w-full p-3 rounded-xl text-purple-600 hover:bg-purple-50"
@@ -546,43 +501,25 @@ const handlePublish = async () => {
             ref={promoRef}
             className="scroll-mt-32 bg-white p-6 rounded-2xl shadow"
           >
-            <h2 className="text-xl font-bold mb-4">
-              Promotions
-            </h2>
+            <h2 className="text-xl font-bold mb-4">Promotions</h2>
 
-            <input
-              placeholder="Voucher Code"
-              className="w-full p-3 border rounded-xl mb-3"
-            />
+            <p className="text-gray-600">
+              Vouchers can be created after the event has been published.
+            </p>
 
-            <input
-              placeholder="Discount %"
-              className="w-full p-3 border rounded-xl mb-3"
-            />
-
-            <div className="flex gap-4">
-              <input
-                type="date"
-                className="w-full p-3 border rounded-xl"
-              />
-
-              <input
-                type="date"
-                className="w-full p-3 border rounded-xl"
-              />
-            </div>
+            <p className="text-sm text-gray-500 mt-2">
+              Create your event first, then use the Edit Event page to manage
+              vouchers.
+            </p>
           </div>
-
         </div>
       </div>
 
       {/* BOTTOM ACTION BAR */}
       <div className="fixed bottom-0 left-0 w-full bg-white border-t px-6 py-4 flex justify-between items-center z-50">
-        <button className="px-6 py-3 bg-gray-200 rounded-xl">
-          Discard
-        </button>
+        <button className="px-6 py-3 bg-gray-200 rounded-xl">Discard</button>
 
-        <button 
+        <button
           onClick={handlePublish}
           disabled={loading}
           className="px-6 py-3 bg-purple-600 text-white rounded-xl disabled:opacity-50"

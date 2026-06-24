@@ -3,14 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 import { getEventById } from "../services/eventService";
-import {
-  createTransaction,
-  uploadPaymentProof,
-} from "../services/transactionService";
 import type { Event } from "../types/event";
+import { getEventReviews, createReview } from "../services/reviewService";
 import { formatCurrency } from "../utils/formatCurrency";
-import { getEventVouchers } from "../services/voucherService";
-import type { Voucher } from "../types/voucher";
 
 function EventDetail() {
   /* ROUTE PARAMS */
@@ -18,35 +13,23 @@ function EventDetail() {
   const navigate = useNavigate();
 
   /* STATES */
-  const [event, setEvent] =
-    useState<Event | null>(null);
+  const [event, setEvent] = useState<Event | null>(null);
 
-  const [selectedTicket, setSelectedTicket] =
-    useState<number | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<number | null>(null);
 
   const [quantity, setQuantity] = useState(1);
 
-  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
 
-  const [transaction, setTransaction] =
-    useState<any>(null);
+  const [rating, setRating] = useState(5);
 
-  const [proof, setProof] =
-    useState<File | null>(null);
+  const [comment, setComment] = useState("");
 
-  const [timeLeft, setTimeLeft] = useState(0);
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const [usePoints, setUsePoints] =
-    useState(false);
+  const isOrganizer = user.role === "ORGANIZER";
 
-  const [selectedVoucher, setSelectedVoucher] =
-    useState<number | null>(null);
-
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-    const isOrganizer = user.role === "ORGANIZER";
-
-    const isOwner = event?.organizer_id === user.id;
+  const isOwner = event?.organizer_id === user.id;
 
   /* FETCH EVENT */
   useEffect(() => {
@@ -56,28 +39,14 @@ function EventDetail() {
       .then(async (eventData) => {
         setEvent(eventData);
 
-        const voucherData = await getEventVouchers(eventData.id);
+        const reviewData = await getEventReviews(eventData.id);
 
-        setVouchers(voucherData);
+        setReviews(reviewData);
       })
-      .catch(() => setEvent(null));
+      .catch(() => {
+        setEvent(null);
+      });
   }, [id]);
-
-  /* TRANSACTION COUNTDOWN */
-  useEffect(() => {
-    if (!transaction) return;
-
-    const interval = setInterval(() => {
-      const diff =
-        new Date(
-          transaction.expired_at
-        ).getTime() - Date.now();
-
-      setTimeLeft(diff > 0 ? diff : 0);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [transaction]);
 
   /* LOADING STATE */
   if (!event) {
@@ -88,55 +57,28 @@ function EventDetail() {
     );
   }
 
-  /* PRICE CALCULATION */
-  const selectedTicketData =
-    event.tickets?.find(
-      (t) => t.id === selectedTicket
-    );
-
-  const basePrice =
-    (selectedTicketData?.price || 0) *
-    quantity;
-
-  const voucherDiscount =
-    vouchers.find(
-      (v) => v.id === selectedVoucher
-    )?.discount_amount || 0;
-
-  const pointsDiscount = usePoints
-    ? Math.min(
-        basePrice - voucherDiscount,
-        20000
-      )
-    : 0;
-
-  const totalPrice = Math.max(
-    basePrice -
-      voucherDiscount -
-      pointsDiscount,
-    0
+/* SELECTED TICKET */
+const selectedTicketData =
+  event.tickets?.find(
+    (t) => t.id === selectedTicket
   );
 
   /* TICKET STATISTICS */
   const totalQuota =
-    event.tickets?.reduce(
-      (sum, t) => sum + (t.quota || 0),
-      0
-    ) || 0;
+    event.tickets?.reduce((sum, t) => sum + (t.quota || 0), 0) || 0;
 
   const totalSold =
-    event.tickets?.reduce(
-      (sum, t) => sum + (t.sold || 0),
-      0
-    ) || 0;
+    event.tickets?.reduce((sum, t) => sum + (t.sold || 0), 0) || 0;
 
-  const remaining =
-    totalQuota - totalSold;
+  const remaining = totalQuota - totalSold;
 
-  const progress =
-    totalQuota > 0
-      ? (totalSold / totalQuota) * 100
-      : 0;
+  const progress = totalQuota > 0 ? (totalSold / totalQuota) * 100 : 0;
+
+  const averageRating = reviews.length
+    ? (
+        reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      ).toFixed(1)
+    : "0";
 
   return (
     <div className="bg-[#f8f5ff] min-h-screen">
@@ -220,7 +162,9 @@ function EventDetail() {
                 <div>
                   <p>{ticket.name}</p>
 
-                  <p>{ticket.quota} seats</p>
+                  <p>
+                    {(ticket.quota || 0) - (ticket.sold || 0)} seats available
+                  </p>
                 </div>
 
                 <div>
@@ -229,9 +173,13 @@ function EventDetail() {
                   {!isFull && !isOrganizer && (
                     <button
                       onClick={() => setSelectedTicket(ticket.id)}
-                      className="bg-purple-600 text-white px-3 py-1 rounded"
+                      className={`px-4 py-2 rounded-xl font-medium transition ${
+                        selectedTicket === ticket.id
+                          ? "bg-green-600 text-white"
+                          : "bg-purple-600 hover:bg-purple-700 text-white"
+                      }`}
                     >
-                      Select
+                      {selectedTicket === ticket.id ? "✓ Selected" : "Select"}
                     </button>
                   )}
                 </div>
@@ -239,6 +187,74 @@ function EventDetail() {
             );
           })}
         </div>
+
+        {selectedTicket && (
+          <div className="bg-white p-6 rounded-2xl shadow-md">
+            <h2 className="font-semibold text-lg mb-4">Ticket Quantity</h2>
+
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                className="w-10 h-10 bg-gray-200 rounded-xl"
+              >
+                -
+              </button>
+
+              <span className="text-xl font-semibold">{quantity}</span>
+
+              <button
+                onClick={() => {
+                  const maxSeats =
+                    (selectedTicketData?.quota || 0) -
+                    (selectedTicketData?.sold || 0);
+
+                  setQuantity((prev) => Math.min(prev + 1, maxSeats));
+                }}
+                className="w-10 h-10 bg-purple-600 text-white rounded-xl"
+              >
+                +
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500 mt-2">
+              Available seats:{" "}
+              {(selectedTicketData?.quota || 0) -
+                (selectedTicketData?.sold || 0)}
+            </p>
+
+            <p className="text-gray-500 mt-3">
+              You are purchasing {quantity} {selectedTicketData?.name}
+              {quantity > 1 ? " tickets" : " ticket"}.
+            </p>
+          </div>
+        )}
+
+        {selectedTicket && (
+          <div className="bg-white p-6 rounded-2xl shadow-md">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="font-semibold">{selectedTicketData?.name}</p>
+
+                <p className="text-gray-500">Quantity: {quantity}</p>
+              </div>
+
+              <button
+                onClick={() =>
+                  navigate("/checkout", {
+                    state: {
+                      eventId: event.id,
+                      ticketId: selectedTicket,
+                      quantity,
+                    },
+                  })
+                }
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl"
+              >
+                Continue to Checkout
+              </button>
+            </div>
+          </div>
+        )}
 
         {isOrganizer && isOwner && (
           <div className="bg-white p-6 rounded-2xl shadow-md">
@@ -249,151 +265,99 @@ function EventDetail() {
             </p>
 
             <button
-              className="bg-purple-600 text-white px-4 py-2 rounded"
-              onClick={() => 
-                navigate(`/events/${event.id}/edit`)
-              }
+              onClick={() => navigate(`/events/${event.id}/edit`)}
+              className="flex gap-3 mt-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl transition"
             >
               Edit Event
+            </button>
+
+            <button
+              onClick={() => navigate(`/events/${event.id}/attendees`)}
+              className="flex gap-3 mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition"
+            >
+              View Attendees
             </button>
           </div>
         )}
 
-        {/* VOUCHERS */}
-        {selectedTicket && (
-          <div className="bg-white p-6 rounded-2xl shadow-md space-y-4">
-            <h2 className="font-semibold text-lg">Vouchers</h2>
+        {/* REVIEWS */}
+        <div className="bg-white p-6 rounded-2xl shadow-md">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Reviews</h2>
 
-            {vouchers.map((v) => (
-              <div
-                key={v.id}
-                className={`flex justify-between p-4 border rounded ${
-                  selectedVoucher === v.id ? "bg-purple-100" : ""
-                }`}
-              >
-                <div>
-                  <p>{v.code}</p>
+            <span className="font-medium">
+              ⭐ {averageRating} ({reviews.length})
+            </span>
+          </div>
 
-                  <p>Rp {v.discount_amount.toLocaleString(
-                    "id-ID"
-                  )}
-                  </p>
+          {reviews.length === 0 ? (
+            <p className="text-gray-500">No reviews yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <div key={review.id} className="border rounded-xl p-4">
+                  <div className="flex justify-between">
+                    <p className="font-semibold">{review.users?.name}</p>
+
+                    <p>{"⭐".repeat(review.rating)}</p>
+                  </div>
+
+                  <p className="text-gray-700 mt-2">{review.comment}</p>
                 </div>
+              ))}
+            </div>
+          )}
 
-                <button
-                  onClick={() =>
-                    setSelectedVoucher(selectedVoucher === v.id ? null : v.id)
-                  }
-                  className="bg-purple-600 text-white px-3 py-1 rounded"
-                >
-                  {selectedVoucher === v.id ? "Used" : "Use"}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+          {!isOrganizer && (
+            <div className="mt-6 border-t pt-4">
+              <h3 className="font-semibold mb-3">Leave a Review</h3>
 
-        {/* PURCHASE */}
-        {selectedTicket && (
-          <div className="bg-white p-6 rounded-2xl shadow-md space-y-4">
-            <h2>Purchase</h2>
+              <select
+                value={rating}
+                onChange={(e) => setRating(Number(e.target.value))}
+                className="w-full border p-3 rounded-xl mb-3"
+              >
+                <option value={5}>⭐⭐⭐⭐⭐</option>
+                <option value={4}>⭐⭐⭐⭐</option>
+                <option value={3}>⭐⭐⭐</option>
+                <option value={2}>⭐⭐</option>
+                <option value={1}>⭐</option>
+              </select>
 
-            <input
-              type="number"
-              min={1}
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-            />
-
-            <label>
-              <input
-                type="checkbox"
-                checked={usePoints}
-                onChange={(e) => setUsePoints(e.target.checked)}
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Share your experience..."
+                className="w-full border p-3 rounded-xl mb-3"
               />
-              Use Points
-            </label>
 
-            <p>Total: Rp {totalPrice}</p>
-          </div>
-        )}
-
-        {/* PAYMENT */}
-        {selectedTicket && (
-          <div className="bg-white p-6 rounded-2xl shadow-md space-y-4">
-            {!transaction && (
               <button
                 onClick={async () => {
                   try {
-                    const res = await createTransaction({
-                      ticket_id: selectedTicket!,
-                      quantity,
-                      use_points: usePoints,
-                      voucher_id: selectedVoucher,
+                    await createReview({
+                      event_id: event.id,
+                      rating,
+                      comment,
                     });
 
-                    setTransaction(res.data);
+                    const updated = await getEventReviews(event.id);
 
-                    alert("✅ Transaction created!");
+                    setReviews(updated);
+
+                    setComment("");
+
+                    alert("Review submitted");
                   } catch (error: any) {
-                    console.error(error);
-
                     alert(error.message);
                   }
                 }}
-                className="bg-purple-600 hover:bg-purple-700 text-white w-full p-3 rounded"
+                className="bg-purple-600 text-white px-4 py-2 rounded-xl"
               >
-                Secure Your Spot
+                Submit Review
               </button>
-            )}
-
-            {transaction && (
-              <>
-                {/* PAYMENT PROOF */}
-                <h2 className="text-lg font-semibold">Upload Payment Proof</h2>
-
-                {/* COUNTDOWN TIMER */}
-                <p className="text-red-500">
-                  Time left: {Math.floor(timeLeft / 60000)}:
-                  {Math.floor((timeLeft % 60000) / 1000)
-                    .toString()
-                    .padStart(2, "0")}
-                </p>
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      setProof(e.target.files[0]);
-                    }
-                  }}
-                  className="border p-2 rounded w-full"
-                />
-
-                <button
-                  onClick={async () => {
-                    try {
-                      if (!proof) {
-                        alert("Please select an image");
-                        return;
-                      }
-
-                      await uploadPaymentProof(transaction.id, proof);
-
-                      alert("✅ Payment proof uploaded!");
-                    } catch (error: any) {
-                      alert(error.message);
-                    }
-                  }}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full"
-                >
-                  Upload Proof
-                </button>
-              </>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

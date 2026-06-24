@@ -10,6 +10,7 @@ import {
   createEventService,
   getMyEventsService,
   updateEventService,
+  getEventAttendeesService,
 } from "../services/event.service";
 
 /* GET ALL EVENTS */
@@ -155,3 +156,33 @@ export const updateEvent = async (
     });
   }
 };
+
+/* GET EVENT ATTENDEES */
+export const getEventAttendees =
+  async (
+    req: AuthRequest,
+    res: Response
+  ) => {
+    try {
+      const eventId = Number(
+        req.params.id
+      );
+
+      const attendees =
+        await getEventAttendeesService(
+          eventId,
+          req.user!.id
+        );
+
+      return res.status(200).json({
+        success: true,
+        data: attendees,
+      });
+    } catch (error: any) {
+      return res.status(400).json({
+        success: false,
+        message:
+          error.message,
+      });
+    }
+  };

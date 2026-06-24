@@ -43,7 +43,7 @@ export type Event = {
 
   tickets?: Ticket[];
   vouchers?: Voucher[];
-  
+
   venue_name?: string;
   venue_address?: string;
   latitude?: number;
@@ -64,4 +64,22 @@ export type CreateEventPayload = {
   longitude?: number;
 
   tickets: CreateTicketPayload[];
+};
+
+export type Attendee = {
+  id: number;
+  status: string;
+
+  users: {
+    name: string;
+    email: string;
+  };
+
+  transaction_items: {
+    quantity: number;
+
+    tickets: {
+      name: string;
+    };
+  }[];
 };

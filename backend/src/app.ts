@@ -11,6 +11,7 @@ import eventRoutes from "./routes/eventRoutes";
 import transactionRoutes from "./routes/transactionRoutes";
 import authRoutes from "./routes/authRoutes";
 import voucherRoutes from "./routes/voucherRoutes";
+import reviewRoutes from "./routes/reviewRoutes";
 
 /* LOAD CRON JOBS */
 import "./utils/cron";
@@ -34,6 +35,7 @@ app.use("/auth", authRoutes);
 app.use("/events", eventRoutes);
 app.use("/transactions", transactionRoutes);
 app.use("/vouchers", voucherRoutes);
+app.use("/reviews", reviewRoutes);
 
 /* HEALTH CHECK */
 app.get("/", (req, res) => {

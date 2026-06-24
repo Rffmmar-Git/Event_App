@@ -6,6 +6,7 @@ import {
   createEvent,
   getMyEvents,
   updateEvent,
+  getEventAttendees,
 } from "../controllers/eventController";
 
 import {
@@ -34,6 +35,12 @@ router.patch(
   "/:id",
   verifyToken,
   updateEvent
+);
+
+router.get(
+  "/:id/attendees",
+  verifyToken,
+  getEventAttendees
 );
 
 router.get("/:id", getEventById);
