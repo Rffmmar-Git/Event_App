@@ -7,11 +7,14 @@ import {
   getMyEvents,
   updateEvent,
   getEventAttendees,
+  deleteEvent,
 } from "../controllers/eventController";
 
 import {
   verifyToken,
 } from "../middleware/auth.middleware";
+
+import { bannerUpload } from "../middleware/bannerUpload";
 
 const router = Router();
 
@@ -28,13 +31,21 @@ router.get(
 router.post(
   "/",
   verifyToken,
+  bannerUpload.single("banner"),
   createEvent
 );
 
 router.patch(
   "/:id",
   verifyToken,
+  bannerUpload.single("banner"),
   updateEvent
+);
+
+router.delete(
+  "/:id",
+  verifyToken,
+  deleteEvent
 );
 
 router.get(

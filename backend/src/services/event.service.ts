@@ -1,4 +1,6 @@
 import prisma from "../config/prisma";
+import fs from "fs";
+import path from "path";
 
 /* GET ALL EVENTS */
 export const getAllEvents = async (query: any) => {
@@ -169,7 +171,8 @@ export const getMyEventsService = async (
 /* CREATE EVENT */
 export const createEventService = async (
   data: any,
-  organizerId: number
+  organizerId: number,
+  file?: Express.Multer.File
 ) => {
   const {
     title,
@@ -178,12 +181,16 @@ export const createEventService = async (
     category,
     start_date,
     end_date,
-    tickets,
     venue_name,
     venue_address,
     latitude,
     longitude,
   } = data;
+
+  const tickets =
+  typeof data.tickets === "string"
+    ? JSON.parse(data.tickets)
+    : data.tickets;
 
   /* VALIDATE REQUIRED FIELDS */
   if (!title || !location || !category || !start_date || !end_date) {
@@ -205,6 +212,8 @@ export const createEventService = async (
       start_date: new Date(start_date),
       end_date: new Date(end_date),
       organizer_id: organizerId,
+
+      banner_url: file?.filename || null,
 
       /* VENUE INFORMATION */
       venue_name: venue_name || null,
@@ -243,7 +252,8 @@ export const createEventService = async (
 export const updateEventService = async (
   eventId: number,
   organizerId: number,
-  data: any
+  data: any,
+  file?: Express.Multer.File
 ) => {
   const existingEvent =
     await prisma.events.findUnique({
@@ -274,8 +284,12 @@ export const updateEventService = async (
     venue_address,
     latitude,
     longitude,
-    tickets,
   } = data;
+
+  const tickets =
+  typeof data.tickets === "string"
+    ? JSON.parse(data.tickets)
+    : data.tickets;
 
   if (
     start_date &&
@@ -307,6 +321,8 @@ export const updateEventService = async (
         venue_name,
         venue_address,
 
+        banner_url: file ? file.filename : undefined,
+
         latitude: latitude !== undefined ? Number(latitude) : undefined,
 
         longitude: longitude !== undefined ? Number(longitude) : undefined,
@@ -328,6 +344,19 @@ export const updateEventService = async (
             },
           });
         }
+      }
+    }
+
+    if (file && existingEvent.banner_url) {
+      const oldBanner = path.join(
+        process.cwd(),
+        "uploads",
+        "banners",
+        existingEvent.banner_url,
+      );
+
+      if (fs.existsSync(oldBanner)) {
+        fs.unlinkSync(oldBanner);
       }
     }
 
@@ -399,3 +428,83 @@ export const getEventAttendeesService =
       },
     });
   };
+
+  /* DELETE EVENT */
+export const deleteEventService = async (
+  eventId: number,
+  organizerId: number
+) => {
+  const event =
+    await prisma.events.findUnique({
+      where: {
+        id: eventId,
+      },
+    });
+
+  if (!event) {
+    throw new Error(
+      "Event not found"
+    );
+  }
+
+  if (
+    event.organizer_id !==
+    organizerId
+  ) {
+    throw new Error(
+      "You are not allowed to delete this event"
+    );
+  }
+
+  const transactionCount =
+    await prisma.transactions.count({
+      where: {
+        event_id: eventId,
+      },
+    });
+
+  if (transactionCount > 0) {
+    throw new Error(
+      "This event already has attendees and cannot be deleted"
+    );
+  }
+
+  return await prisma.$transaction(
+    async (tx) => {
+      await tx.vouchers.deleteMany({
+        where: {
+          event_id: eventId,
+        },
+      });
+
+      await tx.tickets.deleteMany({
+        where: {
+          event_id: eventId,
+        },
+      });
+
+      if (event.banner_url) {
+        const bannerPath = path.join(
+          process.cwd(),
+          "uploads",
+          "banners",
+          event.banner_url,
+        );
+
+        if (fs.existsSync(bannerPath)) {
+          fs.unlinkSync(bannerPath);
+        }
+      }
+
+      await tx.events.delete({
+        where: {
+          id: eventId,
+        },
+      });
+
+      return {
+        success: true,
+      };
+    }
+  );
+};

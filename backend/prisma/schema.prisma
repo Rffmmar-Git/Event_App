@@ -36,10 +36,13 @@ model events {
   organizer_id  Int?
   created_at    DateTime?      @default(now())
   updated_at    DateTime?      @updatedAt
+
   venue_name    String?
   venue_address String?
   latitude      Decimal?
   longitude     Decimal?
+
+  banner_url    String?
 
   users         users?         @relation(fields: [organizer_id], references: [id])
   reviews       reviews[]

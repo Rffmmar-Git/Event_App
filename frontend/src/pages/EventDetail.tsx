@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
-import { getEventById } from "../services/eventService";
+import { getEventById, deleteEvent } from "../services/eventService";
 import type { Event } from "../types/event";
 import { getEventReviews } from "../services/reviewService";
 import { formatCurrency } from "../utils/formatCurrency";
@@ -26,6 +26,28 @@ function EventDetail() {
   const isOrganizer = user.role === "ORGANIZER";
 
   const isOwner = event?.organizer_id === user.id;
+
+  const handleDeleteEvent = async () => {
+    if (!event) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this event?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteEvent(event.id);
+
+      alert("Event deleted successfully");
+
+      navigate("/my-events");
+    } catch (error: any) {
+      alert(error.message || "Failed to delete event");
+    }
+  };
 
   /* FETCH EVENT */
   useEffect(() => {
@@ -53,10 +75,9 @@ function EventDetail() {
     );
   }
 
-/* SELECTED TICKET */
-const selectedTicketData =
-  event.tickets?.find(
-    (t) => t.id === selectedTicket
+  /* SELECTED TICKET */
+  const selectedTicketData = event.tickets?.find(
+    (t) => t.id === selectedTicket,
   );
 
   /* TICKET STATISTICS */
@@ -83,7 +104,15 @@ const selectedTicketData =
       {/* MAIN CONTENT */}
       <div className="pt-28 px-6 max-w-5xl mx-auto space-y-10">
         {/* HERO BANNER */}
-        <div className="h-64 bg-gradient-to-r from-purple-400 to-purple-600 rounded-2xl shadow-lg" />
+        {event.banner_url ? (
+          <img
+            src={`http://localhost:5000/uploads/banners/${event.banner_url}`}
+            alt={event.title}
+            className="h-64 w-full object-cover rounded-2xl shadow-lg"
+          />
+        ) : (
+          <div className="h-64 bg-gradient-to-r from-purple-400 to-purple-600 rounded-2xl shadow-lg" />
+        )}
 
         {/* EVENT INFORMATION */}
         <div className="bg-white p-6 rounded-2xl shadow-md space-y-4">
@@ -291,37 +320,46 @@ const selectedTicketData =
             >
               View Attendees
             </button>
+
+            <button
+              onClick={handleDeleteEvent}
+              className="flex gap-3 mt-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl transition"
+            >
+              Delete Event
+            </button>
           </div>
         )}
 
         {/* REVIEWS */}
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Reviews</h2>
+        {isOrganizer && isOwner && (
+          <div className="bg-white p-6 rounded-2xl shadow-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Reviews</h2>
 
-            <span className="font-medium">
-              ⭐ {averageRating} ({reviews.length})
-            </span>
-          </div>
-
-          {reviews.length === 0 ? (
-            <p className="text-gray-500">No reviews yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {reviews.map((review) => (
-                <div key={review.id} className="border rounded-xl p-4">
-                  <div className="flex justify-between">
-                    <p className="font-semibold">{review.users?.name}</p>
-
-                    <p>{"⭐".repeat(review.rating)}</p>
-                  </div>
-
-                  <p className="text-gray-700 mt-2">{review.comment}</p>
-                </div>
-              ))}
+              <span className="font-medium">
+                ⭐ {averageRating} ({reviews.length})
+              </span>
             </div>
-          )}
-        </div>
+
+            {reviews.length === 0 ? (
+              <p className="text-gray-500">No reviews yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <div key={review.id} className="border rounded-xl p-4">
+                    <div className="flex justify-between">
+                      <p className="font-semibold">{review.users?.name}</p>
+
+                      <p>{"⭐".repeat(review.rating)}</p>
+                    </div>
+
+                    <p className="text-gray-700 mt-2">{review.comment}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

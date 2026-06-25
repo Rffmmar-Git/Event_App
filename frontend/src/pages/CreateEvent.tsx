@@ -7,16 +7,16 @@ import { createEvent } from "../services/eventService";
 import type {
   CreateEventPayload,
   CreateTicketPayload,
-  TicketForm
+  TicketForm,
 } from "../types/event";
 
 function CreateEvent() {
   const navigate = useNavigate();
   /* STATES */
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [activeSection, setActiveSection] = useState("event");
-  const [eventData, setEventData] =
-  useState<CreateEventPayload>({
+  const [eventData, setEventData] = useState<CreateEventPayload>({
     title: "",
     description: "",
     location: "",
@@ -33,21 +33,17 @@ function CreateEvent() {
     tickets: [],
   });
 
-const [tickets, setTickets] = useState<
-  TicketForm[]
->([
-  {
-    name: "",
-    price: "",
-    quota: "",
-  },
-]);
+  const [tickets, setTickets] = useState<TicketForm[]>([
+    {
+      name: "",
+      price: "",
+      quota: "",
+    },
+  ]);
 
-const [loading, setLoading] =
-  useState(false);
+  const [loading, setLoading] = useState(false);
 
-const [locationQuery, setLocationQuery] = 
-  useState("");
+  const [locationQuery, setLocationQuery] = useState("");
 
   /* REFS */
   const eventRef = useRef<HTMLDivElement>(null);
@@ -58,7 +54,7 @@ const [locationQuery, setLocationQuery] =
   /* SCROLL TO SECTION */
   const scrollTo = (
     ref: React.RefObject<HTMLDivElement | null>,
-    key: string
+    key: string,
   ) => {
     setActiveSection(key);
 
@@ -81,9 +77,7 @@ const [locationQuery, setLocationQuery] =
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const found = sections.find(
-              (s) => s.ref.current === entry.target
-            );
+            const found = sections.find((s) => s.ref.current === entry.target);
 
             if (found) {
               setActiveSection(found.key);
@@ -94,7 +88,7 @@ const [locationQuery, setLocationQuery] =
       {
         rootMargin: "-120px 0px -60% 0px",
         threshold: 0.1,
-      }
+      },
     );
 
     sections.forEach((section) => {
@@ -108,73 +102,68 @@ const [locationQuery, setLocationQuery] =
 
   /* HANDLE BANNER UPLOAD */
   const addTicket = () => {
-  setTickets((prev) => [
-    ...prev,
-    {
-      name: "",
-      price: "",
-      quota: "",
-    },
-  ]);
-};
+    setTickets((prev) => [
+      ...prev,
+      {
+        name: "",
+        price: "",
+        quota: "",
+      },
+    ]);
+  };
 
-const updateTicket = (
-  index: number,
-  field: keyof TicketForm,
-  value: string
-) => {
-  const updated = [...tickets];
+  const updateTicket = (
+    index: number,
+    field: keyof TicketForm,
+    value: string,
+  ) => {
+    const updated = [...tickets];
 
-  updated[index] = {
-    ...updated[index],
-    [field]: value,
-  } as any;
+    updated[index] = {
+      ...updated[index],
+      [field]: value,
+    } as any;
 
-  setTickets(updated);
-};
-const handlePublish = async () => {
-  try {
-    setLoading(true);
+    setTickets(updated);
+  };
+  const handlePublish = async () => {
+    try {
+      setLoading(true);
 
-    const formattedTickets: CreateTicketPayload[] =
-      tickets.map((ticket) => ({
+      const formattedTickets: CreateTicketPayload[] = tickets.map((ticket) => ({
         name: ticket.name.trim(),
         price: Number(ticket.price),
         quota: Number(ticket.quota),
       }));
 
-    if (
-      formattedTickets.some(
-        (t) =>
-          !t.name ||
-          t.price <= 0 ||
-          t.quota <= 0
-      )
-    ) {
-      alert(
-        "Please fill in all ticket details correctly"
+      if (
+        formattedTickets.some((t) => !t.name || t.price <= 0 || t.quota <= 0)
+      ) {
+        alert("Please fill in all ticket details correctly");
+        return;
+      }
+
+      await createEvent(
+        {
+          ...eventData,
+          tickets: formattedTickets,
+        },
+        bannerFile,
       );
-      return;
+
+      alert("Event created successfully");
+
+      navigate("/events");
+    } catch (error) {
+      console.error(error);
+
+      alert("Failed to create event");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    await createEvent({
-      ...eventData,
-      tickets: formattedTickets,
-    });
-
-    alert("Event created successfully");
-
-    navigate("/events");
-  } catch (error) {
-    console.error(error);
-
-    alert("Failed to create event");
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const handleSearchLocation = async() => {
+  const handleSearchLocation = async () => {
     try {
       if (!locationQuery.trim()) {
         alert("Please enter a location");
@@ -182,40 +171,41 @@ const handlePublish = async () => {
       }
 
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationQuery
-        )}`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          locationQuery,
+        )}`,
       );
       const data = await response.json();
 
-    if (!data.length) {
-      alert("Location not found");
-      return;
+      if (!data.length) {
+        alert("Location not found");
+        return;
+      }
+
+      const result = data[0];
+
+      setEventData((prev) => ({
+        ...prev,
+        latitude: Number(result.lat),
+        longitude: Number(result.lon),
+      }));
+
+      alert("location found!");
+    } catch (error) {
+      console.error(error);
+
+      alert("Failed to search location");
     }
+  };
 
-    const result = data[0];
+  const handleBanner = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
 
-    setEventData((prev) => ({
-      ...prev,
-      latitude: Number(result.lat),
-      longitude: Number(result.lon),
-    }));
+    const file = e.target.files[0];
 
-    alert("location found!");
-  } catch (error) {
-    console.error(error);
+    setBannerFile(file);
 
-    alert("Failed to search location");
-  }
-};
-
-  const handleBanner = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (e.target.files && e.target.files[0]) {
-      setBannerPreview(
-        URL.createObjectURL(e.target.files[0])
-      );
-    }
+    setBannerPreview(URL.createObjectURL(file));
   };
 
   return (

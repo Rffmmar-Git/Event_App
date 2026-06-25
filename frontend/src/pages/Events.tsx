@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 import { getEvents } from "../services/eventService";
 import useDebounce from "../hooks/useDebounce";
 import type { Event } from "../types/event";
+import EventCard from "../components/EventCard";
 
 function Events() {
   /* STATES */
@@ -115,42 +116,16 @@ function Events() {
           </div>
         ) : (
           <div className="grid md:grid-cols-3 gap-6">
-            {events.map((event) => {
-              /* LOWEST TICKET PRICE */
-              const lowestPrice =
-                event.tickets && event.tickets.length > 0
-                  ? Math.min(
-                      ...event.tickets.map((t: { price: number }) => t.price),
-                    )
-                  : 0;
-
-              return (
-                <div
-                  key={event.id}
-                  onClick={() => navigate(`/events/${event.id}`)}
-                  className="bg-white rounded-xl shadow hover:-translate-y-2 transition cursor-pointer"
-                >
-                  {/* EVENT BANNER */}
-                  <div className="h-40 bg-gray-200 rounded-t-xl"></div>
-
-                  {/* EVENT DETAILS */}
-                  <div className="p-4">
-                    <p className="text-sm text-purple-600">
-                      {new Date(event.start_date).toLocaleDateString()}
-                    </p>
-
-                    <h3 className="font-bold text-lg">{event.title}</h3>
-
-                    <p className="text-sm text-gray-500">📍 {event.location}</p>
-
-                    <p className="mt-2 font-semibold">
-                      Rp {new Intl.NumberFormat("id-ID").format(lowestPrice)}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+  {events.map((event) => (
+    <EventCard
+      key={event.id}
+      event={event}
+      onClick={() =>
+        navigate(`/events/${event.id}`)
+      }
+    />
+  ))}
+</div>
         )}
       </section>
     </div>

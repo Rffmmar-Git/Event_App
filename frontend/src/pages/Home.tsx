@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 import { getEvents } from "../services/eventService";
-import type { Event, Ticket } from "../types/event";
+import type { Event } from "../types/event";
+import EventCard from "../components/EventCard";
 
 function Home() {
   /* STATES */
@@ -21,8 +22,7 @@ function Home() {
   const upcomingEvents = [...events]
     .sort(
       (a, b) =>
-        new Date(a.start_date).getTime() -
-        new Date(b.start_date).getTime()
+        new Date(a.start_date).getTime() - new Date(b.start_date).getTime(),
     )
     .slice(0, 6);
 
@@ -45,16 +45,10 @@ function Home() {
           {/* HERO ACTIONS */}
           <div className="flex gap-4">
             <button
-              onClick={() =>
-                navigate("/events")
-              }
+              onClick={() => navigate("/events")}
               className="bg-white text-purple-700 px-6 py-3 rounded-full font-semibold"
             >
               Explore Events
-            </button>
-
-            <button className="border border-white px-6 py-3 rounded-full">
-              How it Works
             </button>
           </div>
         </div>
@@ -63,17 +57,12 @@ function Home() {
       {/* EVENTS PREVIEW */}
       <section className="py-16 px-6 bg-[#f3ebf9]">
         <div className="max-w-6xl mx-auto">
-
           {/* SECTION HEADER */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold">
-              Upcoming Events
-            </h2>
+            <h2 className="text-3xl font-bold">Upcoming Events</h2>
 
             <button
-              onClick={() =>
-                navigate("/events")
-              }
+              onClick={() => navigate("/events")}
               className="text-purple-600 font-semibold hover:underline"
             >
               View All →
@@ -82,72 +71,14 @@ function Home() {
 
           {/* EVENTS GRID */}
           <div className="grid md:grid-cols-3 gap-6">
-            {upcomingEvents.map((event) => {
-              /* EVENT TICKETS */
-              const tickets: Ticket[] =
-                event.tickets || [];
-
-              /* LOWEST TICKET PRICE */
-              const lowestPrice =
-                tickets.length > 0
-                  ? Math.min(
-                      ...tickets.map(
-                        (t) => t.price
-                      )
-                    )
-                  : null;
-
-              return (
-                <div
-                  key={event.id}
-                  onClick={() =>
-                    navigate(
-                      `/events/${event.id}`
-                    )
-                  }
-                  className="bg-white rounded-xl shadow hover:-translate-y-2 transition cursor-pointer"
-                >
-                  {/* EVENT BANNER */}
-                  <div className="h-40 bg-gray-200 rounded-t-xl"></div>
-
-                  {/* EVENT DETAILS */}
-                  <div className="p-4">
-                    <p className="text-sm text-purple-600">
-                      {new Date(
-                        event.start_date
-                      ).toLocaleDateString(
-                        "id-ID",
-                        {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        }
-                      )}
-                    </p>
-
-                    <h3 className="font-bold text-lg">
-                      {event.title}
-                    </h3>
-
-                    <p className="text-sm text-gray-500">
-                      📍 {event.location}
-                    </p>
-
-                    <p className="mt-2 font-semibold">
-                      {lowestPrice
-                        ? `Starting at Rp ${new Intl.NumberFormat(
-                            "id-ID"
-                          ).format(
-                            lowestPrice
-                          )}`
-                        : "Price unavailable"}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+            {upcomingEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                onClick={() => navigate(`/events/${event.id}`)}
+              />
+            ))}
           </div>
-
         </div>
       </section>
     </div>

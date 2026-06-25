@@ -41,6 +41,8 @@ export type Event = {
   end_date: string;
   organizer_id: number;
 
+  banner_url?: string;
+
   users?: {
     id: number;
     name: string;

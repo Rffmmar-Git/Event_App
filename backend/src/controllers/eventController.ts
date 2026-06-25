@@ -11,6 +11,7 @@ import {
   getMyEventsService,
   updateEventService,
   getEventAttendeesService,
+  deleteEventService,
 } from "../services/event.service";
 
 /* GET ALL EVENTS */
@@ -104,10 +105,7 @@ export const createEvent = async (req: AuthRequest, res: Response) => {
       req.user
     );
 
-    const newEvent = await createEventService(
-      req.body,
-      req.user!.id
-    );
+    const newEvent = await createEventService(req.body, req.user!.id, req.file);
 
     return res.status(201).json({
       success: true,
@@ -134,12 +132,12 @@ export const updateEvent = async (
       req.params.id
     );
 
-    const updatedEvent =
-      await updateEventService(
-        eventId,
-        req.user!.id,
-        req.body
-      );
+    const updatedEvent = await updateEventService(
+      eventId,
+      req.user!.id,
+      req.body,
+      req.file,
+    );
 
     return res.status(200).json({
       success: true,
@@ -186,3 +184,33 @@ export const getEventAttendees =
       });
     }
   };
+
+  /* DELETE EVENT */
+export const deleteEvent = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const eventId = Number(
+      req.params.id
+    );
+
+    await deleteEventService(
+      eventId,
+      req.user!.id
+    );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Event deleted successfully",
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to delete event",
+    });
+  }
+};

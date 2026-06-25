@@ -22,6 +22,7 @@ function EditEvent() {
 
   /* STATES */
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [activeSection, setActiveSection] = useState("event");
   const [eventData, setEventData] = useState<CreateEventPayload>({
     title: "",
@@ -143,6 +144,12 @@ function EditEvent() {
 
     getEventById(id)
       .then((event) => {
+        if (event.banner_url) {
+          setBannerPreview(
+            `http://localhost:5000/uploads/banners/${event.banner_url}`,
+          );
+        }
+
         setEventData({
           title: event.title || "",
           description: event.description || "",
@@ -190,16 +197,19 @@ function EditEvent() {
 
       setLoading(true);
 
-      await updateEvent(Number(id), {
-        ...eventData,
-
-        tickets: tickets.map((ticket) => ({
-          id: ticket.id,
-          name: ticket.name.trim(),
-          price: Number(ticket.price),
-          quota: Number(ticket.quota),
-        })),
-      } as any);
+      await updateEvent(
+        Number(id),
+        {
+          ...eventData,
+          tickets: tickets.map((ticket) => ({
+            id: ticket.id,
+            name: ticket.name.trim(),
+            price: Number(ticket.price),
+            quota: Number(ticket.quota),
+          })),
+        } as any,
+        bannerFile,
+      );
 
       alert("Event updated successfully");
 
@@ -249,9 +259,13 @@ function EditEvent() {
   };
 
   const handleBanner = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setBannerPreview(URL.createObjectURL(e.target.files[0]));
-    }
+    if (!e.target.files?.length) return;
+
+    const file = e.target.files[0];
+
+    setBannerFile(file);
+
+    setBannerPreview(URL.createObjectURL(file));
   };
 
   const handleCreateVoucher = async () => {
