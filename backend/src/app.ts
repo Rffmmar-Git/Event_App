@@ -12,6 +12,7 @@ import transactionRoutes from "./routes/transactionRoutes";
 import authRoutes from "./routes/authRoutes";
 import voucherRoutes from "./routes/voucherRoutes";
 import reviewRoutes from "./routes/reviewRoutes";
+import analyticsRoutes from "./routes/analyticsRoutes";
 
 /* LOAD CRON JOBS */
 import "./utils/cron";
@@ -36,6 +37,7 @@ app.use("/events", eventRoutes);
 app.use("/transactions", transactionRoutes);
 app.use("/vouchers", voucherRoutes);
 app.use("/reviews", reviewRoutes);
+app.use("/analytics", analyticsRoutes);
 
 /* HEALTH CHECK */
 app.get("/", (req, res) => {

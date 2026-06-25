@@ -38,7 +38,16 @@ function MyEvents() {
       <Navbar />
 
       <section className="pt-32 px-6 max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">My Events</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">My Events</h1>
+
+          <button
+            onClick={() => navigate("/analytics")}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl"
+          >
+            Analytics
+          </button>
+        </div>
 
         {events.length === 0 ? (
           <div className="bg-white p-10 rounded-2xl shadow text-center">

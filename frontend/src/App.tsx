@@ -17,6 +17,7 @@ import EditEvent from "./pages/EditEvent";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import OrganizerRoute from "./routes/OrganizerRoute";
 import EventAttendees from "./pages/EventAttendees";
+import OrganizerAnalytics from "./pages/OrganizerAnalytics";
 
 function App() {
   return (
@@ -74,6 +75,15 @@ function App() {
         element={
           <OrganizerRoute>
             <EditEvent />
+          </OrganizerRoute>
+        }
+      />
+
+      <Route
+        path="/analytics"
+        element={
+          <OrganizerRoute>
+            <OrganizerAnalytics />
           </OrganizerRoute>
         }
       />
