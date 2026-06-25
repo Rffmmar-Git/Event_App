@@ -12,6 +12,8 @@ export interface AuthRequest
     email: string;
     role: string;
   };
+
+  file?: Express.Multer.File;
 }
 
 export const verifyToken = (

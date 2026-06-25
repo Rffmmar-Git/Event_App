@@ -6,7 +6,7 @@ import {
 
 import {
   verifyToken,
-} from "../middleware/auth.middleware";
+} from "../middlewares/auth.middleware";
 
 const router = Router();
 

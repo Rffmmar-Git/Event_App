@@ -15,6 +15,12 @@ export const expireTransactions = async () => {
 
     include: {
       transaction_items: true,
+
+      users: {
+        select: {
+          id: true,
+        },
+      },
     },
   });
 
@@ -80,6 +86,20 @@ export const autoCancelTransactions = async () => {
         data: {
           sold: {
             decrement: item.quantity!,
+          },
+        },
+      });
+    }
+
+    /* REFUND USER POINTS */
+    if (trx.user_id && (trx.points_used ?? 0) > 0) {
+      await prisma.users.update({
+        where: {
+          id: trx.user_id,
+        },
+        data: {
+          points_balance: {
+            increment: trx.points_used ?? 0,
           },
         },
       });

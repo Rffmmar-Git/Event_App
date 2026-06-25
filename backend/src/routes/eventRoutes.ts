@@ -12,9 +12,9 @@ import {
 
 import {
   verifyToken,
-} from "../middleware/auth.middleware";
+} from "../middlewares/auth.middleware";
 
-import { bannerUpload } from "../middleware/bannerUpload";
+import { bannerUpload } from "../middlewares/bannerUpload";
 
 const router = Router();
 

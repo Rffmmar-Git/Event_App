@@ -1,11 +1,14 @@
 import prisma from "../config/prisma";
 
 /* CREATE TRANSACTION SERVICE */
-export const createTransactionService = async (
-  data: any,
-  userId: number
-) => {
-  const { ticket_id, quantity, voucher_id, use_points = false } = data;
+export const createTransactionService = async (data: any, userId: number) => {
+  const {
+    ticket_id,
+    quantity,
+    voucher_id,
+    coupon_id,
+    use_points = false,
+  } = data;
 
   /* VALIDATE INPUT */
   if (!ticket_id || !quantity || quantity <= 0) {
@@ -65,6 +68,35 @@ export const createTransactionService = async (
       voucherUsed = true;
     }
 
+    /* APPLY COUPON */
+    let couponDiscount = 0;
+
+    if (coupon_id) {
+      const coupon = await tx.coupons.findUnique({
+        where: {
+          id: coupon_id,
+        },
+      });
+
+      if (!coupon) {
+        throw new Error("Coupon not found");
+      }
+
+      if (coupon.user_id !== userId) {
+        throw new Error("Coupon does not belong to you");
+      }
+
+      if (coupon.is_used) {
+        throw new Error("Coupon already used");
+      }
+
+      if (coupon.expired_at && coupon.expired_at < new Date()) {
+        throw new Error("Coupon expired");
+      }
+
+      couponDiscount = coupon.discount_amount || 0;
+    }
+
     const user = await tx.users.findUnique({
       where: { id: userId },
     });
@@ -75,20 +107,18 @@ export const createTransactionService = async (
     if (use_points && user?.points_balance) {
       pointsUsed = Math.min(
         user.points_balance,
-        subtotal - discount
+        subtotal - discount - couponDiscount,
       );
     }
 
     /* CALCULATE FINAL PRICE */
     const final_price = Math.max(
-      subtotal - discount - pointsUsed,
-      0
+      subtotal - discount - couponDiscount - pointsUsed,
+      0,
     );
 
     /* SET TRANSACTION EXPIRY */
-    const expired_at = new Date(
-      Date.now() + 2 * 60 * 60 * 1000
-    );
+    const expired_at = new Date(Date.now() + 2 * 60 * 60 * 1000);
 
     /* CREATE TRANSACTION */
     const transaction = await tx.transactions.create({
@@ -97,11 +127,19 @@ export const createTransactionService = async (
         event_id: ticket.event_id!,
         total_price: subtotal,
         original_price: subtotal,
-        discount_amount: discount + pointsUsed,
+        discount_amount: discount + couponDiscount + pointsUsed,
+
+        points_used: pointsUsed,
+
         final_price,
+
         status: "WAITING_FOR_PAYMENT",
+
         expired_at,
+
         voucher_id: voucher_id || null,
+
+        coupon_id: coupon_id || null,
       },
     });
 
@@ -143,152 +181,134 @@ export const createTransactionService = async (
 };
 
 /* GET ORGANIZER TRANSACTIONS */
-export const getOrganizerTransactionsService =
-  async (
-    organizerId: number
-  ) => {
-    return await prisma.transactions.findMany({
+export const getOrganizerTransactionsService = async (organizerId: number) => {
+  return await prisma.transactions.findMany({
+    where: {
+      events: {
+        organizer_id: organizerId,
+      },
+    },
+
+    include: {
+      users: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+
+      events: true,
+
+      transaction_items: {
+        include: {
+          tickets: true,
+        },
+      },
+    },
+
+    orderBy: {
+      created_at: "desc",
+    },
+  });
+};
+
+/* APPROVE TRANSACTION */
+export const approveTransactionService = async (transactionId: number) => {
+  return await prisma.$transaction(async (tx) => {
+    const transaction = await tx.transactions.findUnique({
       where: {
-        events: {
-          organizer_id: organizerId,
-        },
-      },
-
-      include: {
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-
-        events: true,
-
-        transaction_items: {
-          include: {
-            tickets: true,
-          },
-        },
-      },
-
-      orderBy: {
-        created_at: "desc",
+        id: transactionId,
       },
     });
-  };
-
-  /* APPROVE TRANSACTION */
-export const approveTransactionService =
-  async (
-    transactionId: number
-  ) => {
-    return await prisma.$transaction(
-      async (tx) => {
-        const transaction =
-          await tx.transactions.findUnique({
-            where: {
-              id: transactionId,
-            },
-          });
-
-        if (!transaction) {
-          throw new Error(
-            "Transaction not found"
-          );
-        }
-
-        if (
-          transaction.status !==
-          "WAITING_CONFIRMATION"
-        ) {
-          throw new Error(
-            "Transaction cannot be approved"
-          );
-        }
-
-        /* CONSUME VOUCHER */
-        if (transaction.voucher_id) {
-          await tx.vouchers.update({
-            where: {
-              id: transaction.voucher_id,
-            },
-            data: {
-              used_count: {
-                increment: 1,
-              },
-            },
-          });
-        }
-
-        return await tx.transactions.update({
-          where: {
-            id: transactionId,
-          },
-          data: {
-            status: "DONE",
-          },
-        });
-      }
-    );
-  };
-
-/* REJECT TRANSACTION */
-export const rejectTransactionService =
-  async (
-    transactionId: number
-  ) => {
-    const transaction =
-      await prisma.transactions.findUnique({
-        where: {
-          id: transactionId,
-        },
-      });
 
     if (!transaction) {
-      throw new Error(
-        "Transaction not found"
-      );
+      throw new Error("Transaction not found");
     }
 
-    if (
-      transaction.status !==
-      "WAITING_CONFIRMATION"
-    ) {
-      throw new Error(
-        "Transaction cannot be rejected"
-      );
+    if (transaction.status !== "WAITING_CONFIRMATION") {
+      throw new Error("Transaction cannot be approved");
     }
 
-    const items =
-      await prisma.transaction_items.findMany({
+    /* CONSUME VOUCHER */
+    if (transaction.voucher_id) {
+      await tx.vouchers.update({
         where: {
-          transaction_id:
-            transactionId,
-        },
-      });
-
-    /* RESTORE SEATS */
-    for (const item of items) {
-      await prisma.tickets.update({
-        where: {
-          id: item.ticket_id!,
+          id: transaction.voucher_id,
         },
         data: {
-          sold: {
-            decrement:
-              item.quantity!,
+          used_count: {
+            increment: 1,
           },
         },
       });
     }
 
-    return await prisma.transactions.update({
+    /* CONSUME COUPON */
+    if (transaction.coupon_id) {
+      await tx.coupons.update({
+        where: {
+          id: transaction.coupon_id,
+        },
+        data: {
+          is_used: true,
+        },
+      });
+    }
+
+    return await tx.transactions.update({
       where: {
         id: transactionId,
       },
       data: {
-        status: "REJECTED",
+        status: "DONE",
       },
     });
-  };
+  });
+};
+
+/* REJECT TRANSACTION */
+export const rejectTransactionService = async (transactionId: number) => {
+  const transaction = await prisma.transactions.findUnique({
+    where: {
+      id: transactionId,
+    },
+  });
+
+  if (!transaction) {
+    throw new Error("Transaction not found");
+  }
+
+  if (transaction.status !== "WAITING_CONFIRMATION") {
+    throw new Error("Transaction cannot be rejected");
+  }
+
+  const items = await prisma.transaction_items.findMany({
+    where: {
+      transaction_id: transactionId,
+    },
+  });
+
+  /* RESTORE SEATS */
+  for (const item of items) {
+    await prisma.tickets.update({
+      where: {
+        id: item.ticket_id!,
+      },
+      data: {
+        sold: {
+          decrement: item.quantity!,
+        },
+      },
+    });
+  }
+
+  return await prisma.transactions.update({
+    where: {
+      id: transactionId,
+    },
+    data: {
+      status: "REJECTED",
+    },
+  });
+};

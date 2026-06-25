@@ -78,6 +78,7 @@ model transactions {
   coupon_id         Int?
   voucher_id        Int?
   updated_at        DateTime?           @updatedAt
+  points_used       Int?                @default(0)
 
   users             users?              @relation(fields: [user_id], references: [id])
   events            events?             @relation(fields: [event_id], references: [id])

@@ -3,6 +3,10 @@ export interface User {
   name?: string;
   email: string;
   role: string;
+
+  points_balance: number;
+  referral_code?: string;
+  profile_picture?: string;
 }
 
 export interface LoginPayload {
@@ -15,6 +19,8 @@ export interface RegisterPayload {
   email: string;
   password: string;
   role: string;
+
+  referral_code?: string;
 }
 
 export interface LoginResponse {

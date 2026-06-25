@@ -10,6 +10,7 @@ import Payment from "./pages/Payment";
 import CreateEvent from "./pages/CreateEvent";
 import TransactionHistory from "./pages/TransactionHistory";
 import Inbox from "./pages/Inbox";
+import Profile from "./pages/Profile";
 import ETicket from "./pages/ETicket";
 import MyEvents from "./pages/MyEvents";
 import OrganizerTransactions from "./pages/OrganizerTransactions";
@@ -94,6 +95,15 @@ function App() {
         element={
           <ProtectedRoute>
             <TransactionHistory />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         }
       />

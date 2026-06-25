@@ -1,7 +1,4 @@
-import {
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
@@ -10,28 +7,21 @@ function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   /* STATES */
-  const [open, setOpen] =
-    useState(false);
+  const [open, setOpen] = useState(false);
 
-  const token =
-    localStorage.getItem("token");
+  const [profileOpen, setProfileOpen] = useState(false);
 
-  const user = JSON.parse(
-    localStorage.getItem("user") || "{}"
-  );
+  const token = localStorage.getItem("token");
 
   const isLoggedIn = !!token;
 
-  const isOrganizer =
-    user.role === "ORGANIZER";
+  const isOrganizer = user?.role === "ORGANIZER";
 
   /* ACTIVE ROUTE */
-  const isActive = (
-    path: string
-  ) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
     logout();
@@ -43,9 +33,7 @@ function Navbar() {
       <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
         {/* LOGO */}
         <div
-          onClick={() =>
-            navigate("/")
-          }
+          onClick={() => navigate("/")}
           className="text-xl font-bold text-purple-600 cursor-pointer"
         >
           EventHub
@@ -55,9 +43,7 @@ function Navbar() {
         <div className="hidden md:flex items-center gap-6 text-gray-600">
           {/* HOME */}
           <button
-            onClick={() =>
-              navigate("/")
-            }
+            onClick={() => navigate("/")}
             className={`${
               isActive("/")
                 ? "font-bold text-purple-600"
@@ -69,9 +55,7 @@ function Navbar() {
 
           {/* EVENTS */}
           <button
-            onClick={() =>
-              navigate("/events")
-            }
+            onClick={() => navigate("/events")}
             className={`${
               isActive("/events")
                 ? "font-bold text-purple-600"
@@ -82,17 +66,11 @@ function Navbar() {
           </button>
 
           {/* TRANSACTIONS */}
-          {isLoggedIn && !isOrganizer &&(
+          {isLoggedIn && !isOrganizer && (
             <button
-              onClick={() =>
-                navigate(
-                  "/transactions"
-                )
-              }
+              onClick={() => navigate("/transactions")}
               className={`${
-                isActive(
-                  "/transactions"
-                )
+                isActive("/transactions")
                   ? "font-bold text-purple-600"
                   : "hover:text-purple-600"
               }`}
@@ -102,11 +80,9 @@ function Navbar() {
           )}
 
           {/* INBOX */}
-          {isLoggedIn && !isOrganizer &&(
+          {isLoggedIn && !isOrganizer && (
             <button
-              onClick={() =>
-                navigate("/inbox")
-              }
+              onClick={() => navigate("/inbox")}
               className={`${
                 isActive("/inbox")
                   ? "font-bold text-purple-600"
@@ -120,15 +96,9 @@ function Navbar() {
           {/* MY EVENTS */}
           {isOrganizer && (
             <button
-              onClick={() =>
-                navigate(
-                  "/my-events"
-                )
-              }
+              onClick={() => navigate("/my-events")}
               className={`${
-                isActive(
-                  "/my-events"
-                )
+                isActive("/my-events")
                   ? "font-bold text-purple-600"
                   : "hover:text-purple-600"
               }`}
@@ -140,15 +110,9 @@ function Navbar() {
           {/* ORGANIZER TRANSACTIONS */}
           {isOrganizer && (
             <button
-              onClick={() =>
-                navigate(
-                  "/organizer-transactions"
-                )
-              }
+              onClick={() => navigate("/organizer-transactions")}
               className={`${
-                isActive(
-                  "/organizer-transactions"
-                )
+                isActive("/organizer-transactions")
                   ? "font-bold text-purple-600"
                   : "hover:text-purple-600"
               }`}
@@ -163,20 +127,14 @@ function Navbar() {
           {!isLoggedIn ? (
             <>
               <button
-                onClick={() =>
-                  navigate("/login")
-                }
+                onClick={() => navigate("/login")}
                 className="font-medium hover:text-purple-600"
               >
                 Login
               </button>
 
               <button
-                onClick={() =>
-                  navigate(
-                    "/register"
-                  )
-                }
+                onClick={() => navigate("/register")}
                 className="bg-purple-600 text-white px-5 py-2 rounded-full font-semibold hover:bg-purple-700 transition"
               >
                 Register
@@ -186,36 +144,85 @@ function Navbar() {
             <>
               {isOrganizer && (
                 <button
-                  onClick={() =>
-                    navigate(
-                      "/create"
-                    )
-                  }
+                  onClick={() => navigate("/create")}
                   className="bg-purple-600 text-white px-5 py-2 rounded-full font-semibold hover:bg-purple-700 transition"
                 >
                   + Create Event
                 </button>
               )}
 
-              <button
-                onClick={
-                  handleLogout
-                }
-                className="border border-gray-300 px-4 py-2 rounded-full hover:bg-gray-100"
-              >
-                Logout
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="w-11 h-11 rounded-full bg-purple-600 text-white flex items-center justify-center overflow-hidden"
+                >
+                  {user?.profile_picture ? (
+                    <img
+                      src={`http://localhost:5000/uploads/profiles/${user.profile_picture}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    user?.name?.charAt(0).toUpperCase()
+                  )}
+                </button>
+
+                {profileOpen && (
+                  <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl border z-50">
+                    <div className="p-4 border-b">
+                      <p className="font-semibold">{user?.name}</p>
+
+                      <p className="text-sm text-gray-500">{user?.email}</p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        navigate("/profile");
+                        setProfileOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-100"
+                    >
+                      👤 Profile
+                    </button>
+
+                    {isOrganizer && (
+                      <>
+                        <button
+                          onClick={() => {
+                            navigate("/my-events");
+                            setProfileOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-100"
+                        >
+                          🎫 My Events
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            navigate("/analytics");
+                            setProfileOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-100"
+                        >
+                          📊 Analytics
+                        </button>
+                      </>
+                    )}
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-3 hover:bg-red-50 text-red-600"
+                    >
+                      🚪 Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>
 
         {/* MOBILE MENU BUTTON */}
-        <button
-          className="md:hidden text-2xl"
-          onClick={() =>
-            setOpen(!open)
-          }
-        >
+        <button className="md:hidden text-2xl" onClick={() => setOpen(!open)}>
           ☰
         </button>
       </div>
@@ -229,9 +236,7 @@ function Navbar() {
               setOpen(false);
             }}
             className={`block w-full text-left ${
-              isActive("/")
-                ? "font-bold text-purple-600"
-                : ""
+              isActive("/") ? "font-bold text-purple-600" : ""
             }`}
           >
             Home
@@ -243,48 +248,34 @@ function Navbar() {
               setOpen(false);
             }}
             className={`block w-full text-left ${
-              isActive(
-                "/events"
-              )
-                ? "font-bold text-purple-600"
-                : ""
+              isActive("/events") ? "font-bold text-purple-600" : ""
             }`}
           >
             Events
           </button>
 
-          {isLoggedIn && !isOrganizer &&(
+          {isLoggedIn && !isOrganizer && (
             <button
               onClick={() => {
-                navigate(
-                  "/transactions"
-                );
+                navigate("/transactions");
                 setOpen(false);
               }}
               className={`block w-full text-left ${
-                isActive(
-                  "/transactions"
-                )
-                  ? "font-bold text-purple-600"
-                  : ""
+                isActive("/transactions") ? "font-bold text-purple-600" : ""
               }`}
             >
               Transactions
             </button>
           )}
 
-          {isLoggedIn && !isOrganizer &&(
+          {isLoggedIn && !isOrganizer && (
             <button
               onClick={() => {
-                navigate(
-                  "/inbox"
-                );
+                navigate("/inbox");
                 setOpen(false);
               }}
               className={`block w-full text-left ${
-                isActive("/inbox")
-                  ? "font-bold text-purple-600"
-                  : ""
+                isActive("/inbox") ? "font-bold text-purple-600" : ""
               }`}
             >
               Inbox
@@ -294,17 +285,11 @@ function Navbar() {
           {isOrganizer && (
             <button
               onClick={() => {
-                navigate(
-                  "/my-events"
-                );
+                navigate("/my-events");
                 setOpen(false);
               }}
               className={`block w-full text-left ${
-                isActive(
-                  "/my-events"
-                )
-                  ? "font-bold text-purple-600"
-                  : ""
+                isActive("/my-events") ? "font-bold text-purple-600" : ""
               }`}
             >
               My Events
@@ -314,15 +299,11 @@ function Navbar() {
           {isOrganizer && (
             <button
               onClick={() => {
-                navigate(
-                  "/organizer-transactions"
-                );
+                navigate("/organizer-transactions");
                 setOpen(false);
               }}
               className={`block w-full text-left ${
-                isActive(
-                  "/organizer-transactions"
-                )
+                isActive("/organizer-transactions")
                   ? "font-bold text-purple-600"
                   : ""
               }`}
@@ -345,9 +326,7 @@ function Navbar() {
 
               <button
                 onClick={() => {
-                  navigate(
-                    "/register"
-                  );
+                  navigate("/register");
                   setOpen(false);
                 }}
                 className="w-full bg-purple-600 text-white py-2 rounded-full"
@@ -360,9 +339,7 @@ function Navbar() {
               {isOrganizer && (
                 <button
                   onClick={() => {
-                    navigate(
-                      "/create"
-                    );
+                    navigate("/create");
                     setOpen(false);
                   }}
                   className="w-full bg-purple-600 text-white py-2 rounded-full"

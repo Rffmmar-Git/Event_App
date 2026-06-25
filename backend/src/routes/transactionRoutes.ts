@@ -10,11 +10,11 @@ import {
   rejectTransaction,
 } from "../controllers/transactionController";
 
-import { upload } from "../middleware/upload";
+import { upload } from "../middlewares/upload";
 
 import {
   verifyToken,
-} from "../middleware/auth.middleware";
+} from "../middlewares/auth.middleware";
 
 const router = express.Router();
 

@@ -1,6 +1,6 @@
 import { Response } from "express";
 
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AuthRequest } from "../middlewares/auth.middleware";
 
 import {
   getOrganizerAnalyticsService,

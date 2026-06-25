@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AuthRequest } from "../middlewares/auth.middleware";
 import prisma from "../config/prisma";
 import { createTransactionService, getOrganizerTransactionsService, approveTransactionService, rejectTransactionService  } from "../services/transaction.service";
 

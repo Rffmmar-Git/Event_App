@@ -13,6 +13,7 @@ export const createTransaction = async (data: {
   ticket_id: number;
   quantity: number;
   voucher_id?: number | null;
+  coupon_id?: number | null;
   use_points?: boolean;
 }) => {
   const res = await fetch(API_URL, {

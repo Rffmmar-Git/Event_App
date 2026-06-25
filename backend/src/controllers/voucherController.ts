@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 
 import {
   AuthRequest,
-} from "../middleware/auth.middleware";
+} from "../middlewares/auth.middleware";
 
 import {
   createVoucherService,
