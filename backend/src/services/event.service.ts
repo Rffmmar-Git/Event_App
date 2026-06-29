@@ -148,6 +148,32 @@ export const getEventByIdService = async (id: number) => {
   };
 };
 
+/* GET EVENT FOR EDIT */
+export const getEventForEditService = async (
+  eventId: number,
+  organizerId: number
+) => {
+  const event = await prisma.events.findUnique({
+    where: {
+      id: eventId,
+    },
+    include: {
+      tickets: true,
+      vouchers: true,
+    },
+  });
+
+  if (!event) {
+    throw new Error("Event not found");
+  }
+
+  if (event.organizer_id !== organizerId) {
+    throw new Error("You are not allowed to edit this event.");
+  }
+
+  return event;
+};
+
 /* GET MY EVENTS */
 export const getMyEventsService = async (
   organizerId: number
@@ -213,7 +239,7 @@ export const createEventService = async (
       end_date: new Date(end_date),
       organizer_id: organizerId,
 
-      banner_url: file?.filename || null,
+      banner_url: (file as any)?.path || null,
 
       /* VENUE INFORMATION */
       venue_name: venue_name || null,
@@ -321,7 +347,7 @@ export const updateEventService = async (
         venue_name,
         venue_address,
 
-        banner_url: file ? file.filename : undefined,
+        banner_url: (file as any)?.path || null,
 
         latitude: latitude !== undefined ? Number(latitude) : undefined,
 
@@ -344,19 +370,6 @@ export const updateEventService = async (
             },
           });
         }
-      }
-    }
-
-    if (file && existingEvent.banner_url) {
-      const oldBanner = path.join(
-        process.cwd(),
-        "uploads",
-        "banners",
-        existingEvent.banner_url,
-      );
-
-      if (fs.existsSync(oldBanner)) {
-        fs.unlinkSync(oldBanner);
       }
     }
 
@@ -397,7 +410,7 @@ export const getEventAttendeesService =
       organizerId
     ) {
       throw new Error(
-        "Unauthorized"
+        "You are not allowed to view attendees for this event."
       );
     }
 
@@ -482,19 +495,6 @@ export const deleteEventService = async (
           event_id: eventId,
         },
       });
-
-      if (event.banner_url) {
-        const bannerPath = path.join(
-          process.cwd(),
-          "uploads",
-          "banners",
-          event.banner_url,
-        );
-
-        if (fs.existsSync(bannerPath)) {
-          fs.unlinkSync(bannerPath);
-        }
-      }
 
       await tx.events.delete({
         where: {

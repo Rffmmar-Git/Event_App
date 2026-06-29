@@ -3,8 +3,6 @@ import Navbar from "../components/Navbar";
 
 import { getMe, updateProfile, changePassword } from "../services/authService";
 
-import { IMAGE_URL } from "../services/eventService";
-
 import type { User } from "../types/auth";
 
 function Profile() {
@@ -43,7 +41,7 @@ function Profile() {
       setName(res.user.name || "");
 
       if (res.user.profile_picture) {
-        setPreview(`${IMAGE_URL}/profiles/${res.user.profile_picture}`);
+        setPreview(res.user.profile_picture);
       }
     } catch (err) {
       console.error(err);

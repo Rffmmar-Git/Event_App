@@ -158,8 +158,9 @@ function Navbar() {
                 >
                   {user?.profile_picture ? (
                     <img
-                      src={`http://localhost:5000/uploads/profiles/${user.profile_picture}`}
+                      src={user.profile_picture}
                       className="w-full h-full object-cover"
+                      alt="Profile"
                     />
                   ) : (
                     user?.name?.charAt(0).toUpperCase()

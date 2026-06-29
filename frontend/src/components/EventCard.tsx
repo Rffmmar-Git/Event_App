@@ -1,5 +1,4 @@
 import type { Event } from "../types/event";
-import { IMAGE_URL } from "../services/eventService";
 
 type Props = {
   event: Event;
@@ -33,7 +32,7 @@ function EventCard({ event, onClick }: Props) {
       {/* EVENT BANNER */}
       {event.banner_url ? (
         <img
-          src={`${IMAGE_URL}/${event.banner_url}`}
+          src={event.banner_url}
           alt={event.title}
           className="w-full h-48 object-cover"
         />

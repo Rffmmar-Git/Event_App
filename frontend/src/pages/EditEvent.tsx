@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { eventCategories } from "../constants/categories";
 import Navbar from "../components/Navbar";
 import {
-  getEventById,
+  getEventForEdit,
   updateEvent,
   getEventVouchers,
   createVoucher,
@@ -142,7 +142,7 @@ function EditEvent() {
   useEffect(() => {
     if (!id) return;
 
-    getEventById(id)
+    getEventForEdit(id)
       .then((event) => {
         if (event.banner_url) {
           setBannerPreview(
@@ -173,7 +173,10 @@ function EditEvent() {
           })) || [],
         );
       })
-      .catch(console.error);
+      .catch((error: Error) => {
+        alert(error.message);
+        navigate("/my-events", { replace: true });
+      });
   }, [id]);
 
   const updateTicket = (

@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   getEvents,
   getEventById,
+  getEventForEdit,
   createEvent,
   getMyEvents,
   updateEvent,
@@ -52,6 +53,12 @@ router.get(
   "/:id/attendees",
   verifyToken,
   getEventAttendees
+);
+
+router.get(
+  "/:id/edit",
+  verifyToken,
+  getEventForEdit
 );
 
 router.get("/:id", getEventById);

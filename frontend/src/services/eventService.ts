@@ -3,6 +3,8 @@ import type { Event, CreateEventPayload } from "../types/event";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/events";
 
 export const IMAGE_URL = `${API_URL.replace("/events", "")}/uploads/banners`;
+export const PROFILE_IMAGE_URL =
+  `${API_URL.replace("/events", "")}/uploads/profiles`;
 
 /* GET ALL EVENTS */
 export const getEvents = async (params?: {
@@ -73,6 +75,26 @@ export const getEventById = async (id: string): Promise<Event> => {
   }
 
   const data = await res.json();
+
+  return data.data;
+};
+
+export const getEventForEdit = async (
+  id: string
+): Promise<Event> => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API_URL}/${id}/edit`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || "Unauthorized");
+  }
 
   return data.data;
 };

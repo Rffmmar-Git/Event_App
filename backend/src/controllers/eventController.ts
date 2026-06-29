@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
 
-import {
-  AuthRequest,
-} from "../middlewares/auth.middleware";
+import { AuthRequest } from "../middlewares/auth.middleware";
 
 import {
   getAllEvents,
   getEventByIdService,
+  getEventForEditService,
   createEventService,
   getMyEventsService,
   updateEventService,
@@ -68,31 +67,54 @@ export const getEventById = async (req: Request, res: Response) => {
   }
 };
 
-/* GET MY EVENTS */
-export const getMyEvents = async (
-  req: AuthRequest,
-  res: Response
-) => {
+/* GET EVENT FOR EDIT */
+export const getEventForEdit = async (req: AuthRequest, res: Response) => {
   try {
-    const events =
-      await getMyEventsService(
-        req.user!.id
-      );
+    const eventId = Number(req.params.id);
+
+    const event = await getEventForEditService(eventId, req.user!.id);
+
+    return res.status(200).json({
+      success: true,
+      data: event,
+    });
+  } catch (error: any) {
+    if (error.message === "You are not allowed to edit this event.") {
+      return res.status(403).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    if (error.message === "Event not found") {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+/* GET MY EVENTS */
+export const getMyEvents = async (req: AuthRequest, res: Response) => {
+  try {
+    const events = await getMyEventsService(req.user!.id);
 
     return res.status(200).json({
       success: true,
       data: events,
     });
   } catch (error) {
-    console.error(
-      "GET MY EVENTS ERROR:",
-      error
-    );
+    console.error("GET MY EVENTS ERROR:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Internal server error",
+      message: "Internal server error",
     });
   }
 };
@@ -100,10 +122,7 @@ export const getMyEvents = async (
 /* CREATE EVENT */
 export const createEvent = async (req: AuthRequest, res: Response) => {
   try {
-    console.log(
-      "Logged in user:",
-      req.user
-    );
+    console.log("Logged in user:", req.user);
 
     const newEvent = await createEventService(req.body, req.user!.id, req.file);
 
@@ -123,14 +142,9 @@ export const createEvent = async (req: AuthRequest, res: Response) => {
 };
 
 /* UPDATE EVENT */
-export const updateEvent = async (
-  req: AuthRequest,
-  res: Response
-) => {
+export const updateEvent = async (req: AuthRequest, res: Response) => {
   try {
-    const eventId = Number(
-      req.params.id
-    );
+    const eventId = Number(req.params.id);
 
     const updatedEvent = await updateEventService(
       eventId,
@@ -141,76 +155,67 @@ export const updateEvent = async (
 
     return res.status(200).json({
       success: true,
-      message:
-        "Event updated successfully",
+      message: "Event updated successfully",
       data: updatedEvent,
     });
   } catch (error: any) {
     return res.status(400).json({
       success: false,
-      message:
-        error.message ||
-        "Failed to update event",
+      message: error.message || "Failed to update event",
     });
   }
 };
 
 /* GET EVENT ATTENDEES */
-export const getEventAttendees =
-  async (
-    req: AuthRequest,
-    res: Response
-  ) => {
-    try {
-      const eventId = Number(
-        req.params.id
-      );
-
-      const attendees =
-        await getEventAttendeesService(
-          eventId,
-          req.user!.id
-        );
-
-      return res.status(200).json({
-        success: true,
-        data: attendees,
-      });
-    } catch (error: any) {
-      return res.status(400).json({
-        success: false,
-        message:
-          error.message,
-      });
-    }
-  };
-
-  /* DELETE EVENT */
-export const deleteEvent = async (
-  req: AuthRequest,
-  res: Response
-) => {
+export const getEventAttendees = async (req: AuthRequest, res: Response) => {
   try {
-    const eventId = Number(
-      req.params.id
-    );
+    const eventId = Number(req.params.id);
 
-    await deleteEventService(
-      eventId,
-      req.user!.id
-    );
+    const attendees = await getEventAttendeesService(eventId, req.user!.id);
 
     return res.status(200).json({
       success: true,
-      message:
-        "Event deleted successfully",
+      data: attendees,
+    });
+  } catch (error: any) {
+    if (
+      error.message === "You are not allowed to view attendees for this event."
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    if (error.message === "Event not found") {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+/* DELETE EVENT */
+export const deleteEvent = async (req: AuthRequest, res: Response) => {
+  try {
+    const eventId = Number(req.params.id);
+
+    await deleteEventService(eventId, req.user!.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Event deleted successfully",
     });
   } catch (error: any) {
     return res.status(400).json({
       success: false,
-      message:
-        error.message ||
-        "Failed to delete event",
+      message: error.message || "Failed to delete event",
     });
   }
 };

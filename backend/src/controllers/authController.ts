@@ -69,7 +69,7 @@ export const updateProfile = async (
 ) => {
   try {
     const profilePicture =
-      req.file?.filename;
+  (req.file as any)?.path;
 
     const user =
       await updateProfileService(
