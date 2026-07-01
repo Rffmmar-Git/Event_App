@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { IMAGE_URL } from "../services/eventService";
-
 import Navbar from "../components/Navbar";
 
 import { getMyEvents } from "../services/eventService";
@@ -72,7 +70,7 @@ function MyEvents() {
                 >
                   {event.banner_url ? (
                     <img
-                      src={`${IMAGE_URL}/${event.banner_url}`}
+                      src={event.banner_url}
                       alt={event.title}
                       className="h-40 w-full object-cover rounded-t-xl"
                     />

@@ -4,13 +4,7 @@ import path from "path";
 
 /* GET ALL EVENTS */
 export const getAllEvents = async (query: any) => {
-  const {
-    search,
-    category,
-    location,
-    page,
-    limit,
-  } = query;
+  const { search, category, location, page, limit } = query;
 
   /* PAGINATION */
   const pageNumber = Math.max(Number(page) || 1, 1);
@@ -78,10 +72,10 @@ export const getAllEvents = async (query: any) => {
 
     ...(limit
       ? {
-        skip,
-        take: limitNumber,
-      }
-    : {})
+          skip,
+          take: limitNumber,
+        }
+      : {}),
   });
 };
 
@@ -107,34 +101,29 @@ export const getEventByIdService = async (id: number) => {
     return event;
   }
 
-  const organizerReviews =
-    await prisma.reviews.findMany({
-      where: {
-        events: {
-          organizer_id:
-            event.organizer_id,
-        },
+  const organizerReviews = await prisma.reviews.findMany({
+    where: {
+      events: {
+        organizer_id: event.organizer_id,
       },
+    },
 
-      select: {
-        rating: true,
-      },
-    });
+    select: {
+      rating: true,
+    },
+  });
 
-  const reviewCount =
-    organizerReviews.length;
+  const reviewCount = organizerReviews.length;
 
   const averageRating =
     reviewCount > 0
       ? Number(
           (
             organizerReviews.reduce(
-              (sum, review) =>
-                sum +
-                (review.rating || 0),
-              0
+              (sum, review) => sum + (review.rating || 0),
+              0,
             ) / reviewCount
-          ).toFixed(1)
+          ).toFixed(1),
         )
       : 0;
 
@@ -151,7 +140,7 @@ export const getEventByIdService = async (id: number) => {
 /* GET EVENT FOR EDIT */
 export const getEventForEditService = async (
   eventId: number,
-  organizerId: number
+  organizerId: number,
 ) => {
   const event = await prisma.events.findUnique({
     where: {
@@ -175,9 +164,7 @@ export const getEventForEditService = async (
 };
 
 /* GET MY EVENTS */
-export const getMyEventsService = async (
-  organizerId: number
-) => {
+export const getMyEventsService = async (organizerId: number) => {
   return await prisma.events.findMany({
     where: {
       organizer_id: organizerId,
@@ -198,7 +185,7 @@ export const getMyEventsService = async (
 export const createEventService = async (
   data: any,
   organizerId: number,
-  file?: Express.Multer.File
+  file?: Express.Multer.File,
 ) => {
   const {
     title,
@@ -214,9 +201,18 @@ export const createEventService = async (
   } = data;
 
   const tickets =
-  typeof data.tickets === "string"
-    ? JSON.parse(data.tickets)
-    : data.tickets;
+    typeof data.tickets === "string" ? JSON.parse(data.tickets) : data.tickets;
+
+  /* VALIDATE DUPLICATE TICKET NAMES */
+  if (Array.isArray(tickets)) {
+    const ticketNames = tickets.map((ticket: any) =>
+      ticket.name.trim().toLowerCase(),
+    );
+
+    if (new Set(ticketNames).size !== ticketNames.length) {
+      throw new Error("Ticket names must be unique.");
+    }
+  }
 
   /* VALIDATE REQUIRED FIELDS */
   if (!title || !location || !category || !start_date || !end_date) {
@@ -272,31 +268,25 @@ export const createEventService = async (
       tickets: true,
     },
   });
-};
+};;
 
 /* UPDATE EVENT */
 export const updateEventService = async (
   eventId: number,
   organizerId: number,
   data: any,
-  file?: Express.Multer.File
+  file?: Express.Multer.File,
 ) => {
-  const existingEvent =
-    await prisma.events.findUnique({
-      where: { id: eventId },
-    });
+  const existingEvent = await prisma.events.findUnique({
+    where: { id: eventId },
+  });
 
   if (!existingEvent) {
     throw new Error("Event not found");
   }
 
-  if (
-    existingEvent.organizer_id !==
-    organizerId
-  ) {
-    throw new Error(
-      "You are not allowed to edit this event"
-    );
+  if (existingEvent.organizer_id !== organizerId) {
+    throw new Error("You are not allowed to edit this event");
   }
 
   const {
@@ -313,19 +303,27 @@ export const updateEventService = async (
   } = data;
 
   const tickets =
-  typeof data.tickets === "string"
-    ? JSON.parse(data.tickets)
-    : data.tickets;
+    typeof data.tickets === "string" ? JSON.parse(data.tickets) : data.tickets;
 
-  if (
-    start_date &&
-    end_date &&
-    new Date(start_date) >=
-      new Date(end_date)
-  ) {
-    throw new Error(
-      "Invalid date range"
+  /* VALIDATE DUPLICATE TICKET NAMES */
+  if (Array.isArray(tickets)) {
+    const ticketNames = tickets.map((ticket: any) =>
+      ticket.name.trim().toLowerCase(),
     );
+
+    if (new Set(ticketNames).size !== ticketNames.length) {
+      throw new Error("Ticket names must be unique.");
+    }
+  }
+
+  const existingTickets = await prisma.tickets.findMany({
+    where: {
+      event_id: eventId,
+    },
+  });
+
+  if (start_date && end_date && new Date(start_date) >= new Date(end_date)) {
+    throw new Error("Invalid date range");
   }
 
   return await prisma.$transaction(async (tx) => {
@@ -355,18 +353,44 @@ export const updateEventService = async (
       },
     });
 
+    /* DELETE REMOVED TICKETS */
+    const incomingTicketIds = tickets
+      ?.filter((ticket: any) => ticket.id)
+      .map((ticket: any) => ticket.id);
+
+    for (const existingTicket of existingTickets) {
+      if (!incomingTicketIds?.includes(existingTicket.id)) {
+        await tx.tickets.delete({
+          where: {
+            id: existingTicket.id,
+          },
+        });
+      }
+    }
+
     if (Array.isArray(tickets)) {
       for (const ticket of tickets) {
         if (ticket.id) {
+          // Update existing ticket
           await tx.tickets.update({
             where: {
               id: ticket.id,
             },
-
             data: {
               name: ticket.name,
               price: Number(ticket.price),
               quota: Number(ticket.quota),
+            },
+          });
+        } else {
+          // Create new ticket
+          await tx.tickets.create({
+            data: {
+              event_id: eventId,
+              name: ticket.name,
+              price: Number(ticket.price),
+              quota: Number(ticket.quota),
+              sold: 0,
             },
           });
         }
@@ -384,127 +408,105 @@ export const updateEventService = async (
       },
     });
   });
-};
+};;
 
 /* GET EVENT ATTENDEES */
-export const getEventAttendeesService =
-  async (
-    eventId: number,
-    organizerId: number
-  ) => {
-    const event =
-      await prisma.events.findUnique({
-        where: {
-          id: eventId,
-        },
-      });
+export const getEventAttendeesService = async (
+  eventId: number,
+  organizerId: number,
+) => {
+  const event = await prisma.events.findUnique({
+    where: {
+      id: eventId,
+    },
+  });
 
-    if (!event) {
-      throw new Error(
-        "Event not found"
-      );
-    }
+  if (!event) {
+    throw new Error("Event not found");
+  }
 
-    if (
-      event.organizer_id !==
-      organizerId
-    ) {
-      throw new Error(
-        "You are not allowed to view attendees for this event."
-      );
-    }
+  if (event.organizer_id !== organizerId) {
+    throw new Error("You are not allowed to view attendees for this event.");
+  }
 
-    return await prisma.transactions.findMany({
-      where: {
-        event_id: eventId,
-        status: "DONE",
-      },
+  return await prisma.transactions.findMany({
+    where: {
+      event_id: eventId,
+      status: "DONE",
+    },
 
-      include: {
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-
-        transaction_items: {
-          include: {
-            tickets: true,
-          },
+    include: {
+      users: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
         },
       },
 
-      orderBy: {
-        created_at: "desc",
+      transaction_items: {
+        include: {
+          tickets: true,
+        },
       },
-    });
-  };
+    },
 
-  /* DELETE EVENT */
+    orderBy: {
+      created_at: "desc",
+    },
+  });
+};
+
+/* DELETE EVENT */
 export const deleteEventService = async (
   eventId: number,
-  organizerId: number
+  organizerId: number,
 ) => {
-  const event =
-    await prisma.events.findUnique({
+  const event = await prisma.events.findUnique({
+    where: {
+      id: eventId,
+    },
+  });
+
+  if (!event) {
+    throw new Error("Event not found");
+  }
+
+  if (event.organizer_id !== organizerId) {
+    throw new Error("You are not allowed to delete this event");
+  }
+
+  const transactionCount = await prisma.transactions.count({
+    where: {
+      event_id: eventId,
+    },
+  });
+
+  if (transactionCount > 0) {
+    throw new Error("This event already has attendees and cannot be deleted");
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    await tx.vouchers.deleteMany({
+      where: {
+        event_id: eventId,
+      },
+    });
+
+    await tx.tickets.deleteMany({
+      where: {
+        event_id: eventId,
+      },
+    });
+
+    await tx.events.delete({
       where: {
         id: eventId,
       },
     });
 
-  if (!event) {
-    throw new Error(
-      "Event not found"
-    );
-  }
-
-  if (
-    event.organizer_id !==
-    organizerId
-  ) {
-    throw new Error(
-      "You are not allowed to delete this event"
-    );
-  }
-
-  const transactionCount =
-    await prisma.transactions.count({
-      where: {
-        event_id: eventId,
-      },
-    });
-
-  if (transactionCount > 0) {
-    throw new Error(
-      "This event already has attendees and cannot be deleted"
-    );
-  }
-
-  return await prisma.$transaction(
-    async (tx) => {
-      await tx.vouchers.deleteMany({
-        where: {
-          event_id: eventId,
-        },
-      });
-
-      await tx.tickets.deleteMany({
-        where: {
-          event_id: eventId,
-        },
-      });
-
-      await tx.events.delete({
-        where: {
-          id: eventId,
-        },
-      });
-
-      return {
-        success: true,
-      };
-    }
-  );
+    return {
+      success: true,
+    };
+  });
 };

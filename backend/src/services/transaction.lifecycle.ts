@@ -40,6 +40,20 @@ export const expireTransactions = async () => {
       });
     }
 
+    /* REFUND USER POINTS */
+    if (trx.user_id && (trx.points_used ?? 0) > 0) {
+      await prisma.users.update({
+        where: {
+          id: trx.user_id,
+        },
+        data: {
+          points_balance: {
+            increment: trx.points_used ?? 0,
+          },
+        },
+      });
+    }
+
     /* UPDATE TRANSACTION STATUS */
     await prisma.transactions.update({
       where: {
@@ -57,9 +71,7 @@ export const expireTransactions = async () => {
 
 /* AUTO CANCEL TRANSACTIONS */
 export const autoCancelTransactions = async () => {
-  const threeDaysAgo = new Date(
-    Date.now() - 3 * 24 * 60 * 60 * 1000
-  );
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 
   /* FIND OLD PENDING TRANSACTIONS */
   const transactions = await prisma.transactions.findMany({

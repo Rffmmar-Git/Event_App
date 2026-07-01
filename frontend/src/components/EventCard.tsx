@@ -11,12 +11,28 @@ function EventCard({ event, onClick }: Props) {
     new Intl.NumberFormat("id-ID").format(price);
 
   /* FORMAT DATE */
-  const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+const formatDateRange = (start: string, end: string) => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  const sameDay =
+    startDate.getFullYear() === endDate.getFullYear() &&
+    startDate.getMonth() === endDate.getMonth() &&
+    startDate.getDate() === endDate.getDate();
+
+  if (sameDay) {
+    return formatDate(start);
+  }
+
+  return `${formatDate(start)} - ${formatDate(end)}`;
+};
 
   /* GET LOWEST TICKET PRICE */
   const lowestPrice =
@@ -58,7 +74,7 @@ function EventCard({ event, onClick }: Props) {
 
         {/* EVENT DATE */}
         <p className="text-gray-600 mb-4">
-          📅 {formatDate(event.start_date)} - {formatDate(event.end_date)}
+          📅 {formatDateRange(event.start_date, event.end_date)}
         </p>
 
         {/* EVENT PRICE */}

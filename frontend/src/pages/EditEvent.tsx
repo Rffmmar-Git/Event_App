@@ -145,9 +145,7 @@ function EditEvent() {
     getEventForEdit(id)
       .then((event) => {
         if (event.banner_url) {
-          setBannerPreview(
-            `http://localhost:5000/uploads/banners/${event.banner_url}`,
-          );
+          setBannerPreview(event.banner_url || null);
         }
 
         setEventData({
@@ -199,6 +197,15 @@ function EditEvent() {
       if (!id) return;
 
       setLoading(true);
+
+      const ticketNames = tickets.map((ticket) =>
+        ticket.name.trim().toLowerCase(),
+      );
+
+      if (new Set(ticketNames).size !== ticketNames.length) {
+        alert("Ticket names must be unique.");
+        return;
+      }
 
       await updateEvent(
         Number(id),
@@ -576,6 +583,18 @@ function EditEvent() {
                     className="w-full p-3 border rounded-xl"
                   />
                 </div>
+
+                {tickets.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setTickets((prev) => prev.filter((_, i) => i !== index))
+                    }
+                    className="mt-3 text-red-600 hover:text-red-700 font-medium"
+                  >
+                    Delete Ticket
+                  </button>
+                )}
               </div>
             ))}
 

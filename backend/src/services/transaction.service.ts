@@ -302,6 +302,20 @@ export const rejectTransactionService = async (transactionId: number) => {
       },
     });
   }
+  
+  /* RESTORE USER POINTS */
+if ((transaction.points_used || 0) > 0) {
+  await prisma.users.update({
+    where: {
+      id: transaction.user_id!,
+    },
+    data: {
+      points_balance: {
+        increment: transaction.points_used!,
+      },
+    },
+  });
+}
 
   return await prisma.transactions.update({
     where: {

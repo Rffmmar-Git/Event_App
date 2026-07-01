@@ -106,7 +106,7 @@ function EventDetail() {
         {/* HERO BANNER */}
         {event.banner_url ? (
           <img
-            src={`http://localhost:5000/uploads/banners/${event.banner_url}`}
+            src={event.banner_url}
             alt={event.title}
             className="h-64 w-full object-cover rounded-2xl shadow-lg"
           />
@@ -133,6 +133,52 @@ function EventDetail() {
             <p className="text-yellow-600 font-medium mt-1">
               ⭐ {event.organizer_rating?.average || 0} Star Rating (
               {event.organizer_rating?.count || 0} reviews)
+            </p>
+          </div>
+
+          {/* EVENT DATE */}
+          <div className="space-y-1 text-gray-600">
+            <p>
+              📅{" "}
+              {(() => {
+                const start = new Date(event.start_date);
+                const end = new Date(event.end_date);
+
+                const sameDay =
+                  start.getFullYear() === end.getFullYear() &&
+                  start.getMonth() === end.getMonth() &&
+                  start.getDate() === end.getDate();
+
+                if (sameDay) {
+                  return `${start.toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })} • ${start.toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })} - ${end.toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}`;
+                }
+
+                return `${start.toLocaleDateString("id-ID", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })} ${start.toLocaleTimeString("id-ID", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })} - ${end.toLocaleDateString("id-ID", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })} ${end.toLocaleTimeString("id-ID", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}`;
+              })()}
             </p>
           </div>
 

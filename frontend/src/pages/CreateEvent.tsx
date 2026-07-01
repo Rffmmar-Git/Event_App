@@ -143,6 +143,15 @@ function CreateEvent() {
         return;
       }
 
+      const ticketNames = tickets.map((ticket) =>
+        ticket.name.trim().toLowerCase(),
+      );
+
+      if (new Set(ticketNames).size !== ticketNames.length) {
+        alert("Ticket names must be unique.");
+        return;
+      }
+
       await createEvent(
         {
           ...eventData,

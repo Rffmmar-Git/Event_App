@@ -124,7 +124,7 @@ function Profile() {
     <div className="bg-[#f8f5ff] min-h-screen">
       <Navbar />
 
-      <div className="max-w-3xl mx-auto pt-28 px-6">
+      <div className="max-w-4xl mx-auto pt-28 px-6">
         <div className="bg-white rounded-2xl shadow p-8">
           <h1 className="text-3xl font-bold mb-8">My Profile</h1>
 
@@ -161,122 +161,126 @@ function Profile() {
               Change Photo
             </button>
 
-            <div className="mt-10 w-full max-w-2xl mx-auto space-y-5"></div>
+            <div className="mt-10 w-full max-w-xl space-y-5">
+              <div>
+                <label className="block font-semibold mb-2">Name</label>
 
-            <div>
-              <label className="block font-semibold mb-2">Name</label>
-
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full border rounded-xl p-3"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold mb-2">Email</label>
-
-              <input
-                value={user.email}
-                disabled
-                className="w-full border rounded-xl p-3 bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold mb-2">Role</label>
-
-              <input
-                value={user.role}
-                disabled
-                className="w-full border rounded-xl p-3 bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold mb-2">Current Points</label>
-
-              <input
-                value={`${user.points_balance.toLocaleString()} pts`}
-                disabled
-                className="w-full border rounded-xl p-3 bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold mb-2">Referral Code</label>
-
-              <div className="flex items-center gap-3">
                 <input
-                  value={user.referral_code || ""}
-                  disabled
-                  className="flex-1 border rounded-xl p-3 bg-gray-100"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full border rounded-xl p-3"
                 />
-
-                <button
-                  type="button"
-                  onClick={copyReferralCode}
-                  className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
-                >
-                  Copy
-                </button>
               </div>
+
+              <div>
+                <label className="block font-semibold mb-2">Email</label>
+
+                <input
+                  value={user.email}
+                  disabled
+                  className="w-full border rounded-xl p-3 bg-gray-100"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-2">Role</label>
+
+                <input
+                  value={user.role}
+                  disabled
+                  className="w-full border rounded-xl p-3 bg-gray-100"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-2">
+                  Current Points
+                </label>
+
+                <input
+                  value={`${user.points_balance.toLocaleString()} pts`}
+                  disabled
+                  className="w-full border rounded-xl p-3 bg-gray-100"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-2">
+                  Referral Code
+                </label>
+
+                <div className="flex w-full gap-3">
+                  <input
+                    value={user.referral_code || ""}
+                    disabled
+                    className="flex-1 border rounded-xl p-3 bg-gray-100"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={copyReferralCode}
+                    className="w-24 bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={handleSaveProfile}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-xl font-semibold"
+              >
+                Save Profile
+              </button>
+
+              <hr className="my-8" />
+
+              <h2 className="text-2xl font-bold">Change Password</h2>
+
+              <div>
+                <label className="block font-semibold mb-2">
+                  Current Password
+                </label>
+
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full border rounded-xl p-3"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-2">New Password</label>
+
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full border rounded-xl p-3"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-2">
+                  Confirm Password
+                </label>
+
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full border rounded-xl p-3"
+                />
+              </div>
+
+              <button
+                onClick={handleChangePassword}
+                className="w-full bg-black hover:bg-gray-800 text-white p-4 rounded-xl font-semibold"
+              >
+                Change Password
+              </button>
             </div>
-
-            <button
-              onClick={handleSaveProfile}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-xl font-semibold"
-            >
-              Save Profile
-            </button>
-
-            <hr className="my-8" />
-
-            <h2 className="text-2xl font-bold">Change Password</h2>
-
-            <div>
-              <label className="block font-semibold mb-2">
-                Current Password
-              </label>
-
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full border rounded-xl p-3"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold mb-2">New Password</label>
-
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full border rounded-xl p-3"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold mb-2">
-                Confirm Password
-              </label>
-
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full border rounded-xl p-3"
-              />
-            </div>
-
-            <button
-              onClick={handleChangePassword}
-              className="w-full bg-black hover:bg-gray-800 text-white p-4 rounded-xl font-semibold"
-            >
-              Change Password
-            </button>
           </div>
         </div>
       </div>
